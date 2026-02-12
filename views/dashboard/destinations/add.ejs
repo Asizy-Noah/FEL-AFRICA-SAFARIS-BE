@@ -28,16 +28,45 @@
 
             <div class="form-group">
                 <label for="destinationCategories">Categories</label>
-                <select id="destinationCategories" name="categories" class="form-control" multiple style="height:120px;">
-                    <% categories.forEach(function(cat) { %>
-                        <option value="<%= cat._id %>"><%= cat.name %></option>
-                    <% }); %>
-                </select>
+                <div class="custom-multiselect-container">
+                    <div class="multiselect-trigger">
+                        <div class="multiselect-placeholder">Select Categories</div>
+                        <div class="multiselect-tags" id="selectedCategoriesTags"></div>
+                        <i class="fas fa-chevron-down multiselect-arrow"></i>
+                    </div>
+                    <select id="destinationCategories" name="categories" class="custom-multiselect" multiple>
+                        <% categories.forEach(function(cat) { %>
+                            <option value="<%= cat._id %>"><%= cat.name %></option>
+                        <% }); %>
+                    </select>
+                    <div class="multiselect-dropdown" id="categoriesDropdown">
+                        <div class="multiselect-search">
+                            <input type="text" class="multiselect-search-input" placeholder="Search categories...">
+                        </div>
+                        <div class="multiselect-options" id="categoriesOptions">
+                            <% categories.forEach(function(cat) { %>
+                                <label class="multiselect-option">
+                                    <input type="checkbox" value="<%= cat._id %>" data-label="<%= cat.name %>">
+                                    <span><%= cat.name %></span>
+                                </label>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="coverImage">Upload Cover Image</label>
-                <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                <div class="file-upload-container">
+                    <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop image or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="imagePreview">
+                        <img src="" alt="Image Preview" style="display: none;">
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -45,18 +74,21 @@
                 <textarea id="description" name="description" class="form-control" rows="6"><%= typeof body !== 'undefined' ? body.description : '' %></textarea>
             </div>
 
-            <h3 class="section-title">SEO</h3>
+            <h3 class="section-title">SEO Information</h3>
             <div class="form-group">
                 <label for="seoTitle">Meta Title</label>
                 <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="">
+                <small class="form-text text-muted">Recommended length: 50-60 characters</small>
             </div>
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
                 <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters</small>
             </div>
             <div class="form-group">
                 <label for="seoKeywords">Meta Keywords</label>
                 <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="">
+                <small class="form-text text-muted">Separate keywords with commas</small>
             </div>
         </div>
 
@@ -65,3 +97,36 @@
         </div>
     </form>
 </div>
+
+<script src="/js/multiselect.js"></script>
+<link href="/css/multiselect.css" rel="stylesheet">
+<link href="/css/form-enhancements.css" rel="stylesheet">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize multiselect for categories
+        new MultiSelect('destinationCategories', {
+            placeholder: 'Select Categories'
+        });
+
+        // Image preview
+        const coverImageInput = document.getElementById('coverImage');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewImg = imagePreview.querySelector('img');
+
+        coverImageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreviewImg.src = e.target.result;
+                    imagePreviewImg.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreviewImg.src = '';
+                imagePreviewImg.style.display = 'none';
+            }
+        });
+    });
+</script>

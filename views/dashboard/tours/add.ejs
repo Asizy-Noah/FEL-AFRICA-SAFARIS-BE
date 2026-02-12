@@ -25,15 +25,19 @@
 
                 <div class="form-group">
                 <label for="coverImage">Upload Cover Image</label>
-                <div class="file-upload-container row">
-                    <div class="col-md-6">
-                        <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
-                        <div class="file-upload-box">
+                <div class="file-upload-container">
+                    <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <div class="upload-icon">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Drag & drop image or click to browse</span>
                         </div>
+                        <h4 class="upload-title">Add Cover Image</h4>
+                        <p class="upload-text">Drag & drop image here or click to browse</p>
+                        <small class="upload-hint">Recommended: 1200x600px (2:1 ratio), Max 5MB</small>
                     </div>
-                    <div class="col-md-6"><div class="file-preview" id="imagePreview"></div></div>
+                    <div class="file-preview" id="imagePreview">
+                        <img src="" alt="Image Preview" style="display: none;">
+                    </div>
                 </div>
                 </div>
             </div>
@@ -56,21 +60,57 @@
 
                 <div class="form-group col-md-3">
                     <label for="category">Categories</label>
-                    <select id="category" name="category" class="form-control" multiple required style="height:120px;">
-                        <% // Categories will be loaded dynamically via JavaScript or server-side. %>
-                    </select>
+                    <div class="custom-multiselect-container">
+                        <div class="multiselect-trigger">
+                            <div class="multiselect-placeholder">Select Categories</div>
+                            <div class="multiselect-tags" id="selectedCategoriesTags"></div>
+                            <i class="fas fa-chevron-down multiselect-arrow"></i>
+                        </div>
+                        <select id="category" name="category" class="custom-multiselect" multiple required>
+                            <% // Categories will be loaded dynamically via JavaScript or server-side. %>
+                        </select>
+                        <div class="multiselect-dropdown" id="categoryDropdown">
+                            <div class="multiselect-search">
+                                <input type="text" class="multiselect-search-input" placeholder="Search categories...">
+                            </div>
+                            <div class="multiselect-options" id="categoryOptions">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group col-md-3">
                     <label for="destinations">Destinations</label>
-                    <select id="destinations" name="destinations" class="form-control" multiple style="height:120px;">
-                        <option value="">Select Destinations</option>
-                        <% if (typeof destinations !== 'undefined') { %>
-                            <% destinations.forEach(function(dest) { %>
-                                <option value="<%= dest._id %>"><%= dest.name %></option>
-                            <% }); %>
-                        <% } %>
-                    </select>
+                    <div class="custom-multiselect-container">
+                        <div class="multiselect-trigger">
+                            <div class="multiselect-placeholder">Select Destinations</div>
+                            <div class="multiselect-tags" id="selectedDestinationsTags"></div>
+                            <i class="fas fa-chevron-down multiselect-arrow"></i>
+                        </div>
+                        <select id="destinations" name="destinations" class="custom-multiselect" multiple>
+                            <option value="">Select Destinations</option>
+                            <% if (typeof destinations !== 'undefined') { %>
+                                <% destinations.forEach(function(dest) { %>
+                                    <option value="<%= dest._id %>"><%= dest.name %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                        <div class="multiselect-dropdown" id="destinationsDropdown">
+                            <div class="multiselect-search">
+                                <input type="text" class="multiselect-search-input" placeholder="Search destinations...">
+                            </div>
+                            <div class="multiselect-options" id="destinationsOptions">
+                                <% if (typeof destinations !== 'undefined') { %>
+                                    <% destinations.forEach(function(dest) { %>
+                                        <label class="multiselect-option">
+                                            <input type="checkbox" value="<%= dest._id %>" data-label="<%= dest.name %>">
+                                            <span><%= dest.name %></span>
+                                        </label>
+                                    <% }); %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group col-md-3">
@@ -226,6 +266,10 @@
     </form>
 </div>
 
+<script src="/js/multiselect.js"></script>
+<link href="/css/multiselect.css" rel="stylesheet">
+<link href="/css/form-enhancements.css" rel="stylesheet">
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const countrySelect = document.getElementById('country');
@@ -234,91 +278,108 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function filterCategories() {
         const selectedCountryId = countrySelect.value;
-       
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const categoryOptions = document.getElementById('categoryOptions');
 
-        // Clear existing categories (except the default "Select Category")
-        categorySelect.innerHTML = '<option value="">Select Category</option>';
+        // Clear existing categories
+        categoryOptions.innerHTML = '';
        
 
         if (selectedCountryId) {
             const apiUrl = `/api/categories/by-country/${selectedCountryId}`;
-          
 
-            fetch(apiUrl) // Call your new API endpoint
+            fetch(apiUrl)
                 .then(response => {
-                   
                     if (!response.ok) {
-                        // Log the full response status and text for more details on error
-                        console.error('Frontend Script: Network response was not ok. Status:', response.status, 'Status Text:', response.statusText);
-                        // You can also try to parse response as text to see backend error message
+                        console.error('Frontend Script: Network response was not ok. Status:', response.status);
                         return response.text().then(text => { throw new Error('HTTP error ' + response.status + ': ' + text); });
                     }
                     return response.json();
                 })
                 .then(data => {
-                   
-
-                    if (data.data && Array.isArray(data.data)) { // Ensure data.data is an array
-                        
+                    if (data.data && Array.isArray(data.data)) {
                         if (data.data.length === 0) {
                             console.warn('Frontend Script: No categories found for this country.');
                         }
 
-                            data.data.forEach(category => {
-                                const option = document.createElement('option');
-                                option.value = category._id;
-                                option.textContent = category.name;
-                                categorySelect.appendChild(option);
+                        // Clear the select element
+                        categorySelect.innerHTML = '';
+
+                        data.data.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category._id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+
+                            // Add to multiselect dropdown
+                            const label = document.createElement('label');
+                            label.className = 'multiselect-option';
+                            label.innerHTML = `<input type="checkbox" value="${category._id}" data-label="${category.name}"><span>${category.name}</span>`;
+                            categoryOptions.appendChild(label);
+                        });
+
+                        // Attempt to re-select categories if oldInput exists
+                        let oldSelectedCategories = <%= JSON.stringify(typeof oldInput !== 'undefined' && oldInput.category ? oldInput.category : []) %>;
+                        if (!Array.isArray(oldSelectedCategories)) {
+                            oldSelectedCategories = [oldSelectedCategories];
+                        }
+
+                        if (oldSelectedCategories.length > 0) {
+                            document.querySelectorAll('#categoryOptions input[type="checkbox"]').forEach(checkbox => {
+                                if (oldSelectedCategories.includes(checkbox.value)) {
+                                    checkbox.checked = true;
+                                }
                             });
+                        }
 
-                            // Attempt to re-select categories if oldInput exists (support array or single value)
-                            let oldSelectedCategories = <%= JSON.stringify(typeof oldInput !== 'undefined' && oldInput.category ? oldInput.category : []) %>;
-                            if (!Array.isArray(oldSelectedCategories)) {
-                                oldSelectedCategories = [oldSelectedCategories];
-                            }
-
-                            if (oldSelectedCategories.length > 0) {
-                                Array.from(categorySelect.options).forEach(opt => {
-                                    if (oldSelectedCategories.includes(opt.value)) opt.selected = true;
-                                });
-                            }
-                    } else {
-                        
+                        // Refresh the MultiSelect UI
+                        if (window.multiSelectInstances && window.multiSelectInstances['category']) {
+                            window.multiSelectInstances['category'].updateDisplay();
+                        }
                     }
                 })
                 .catch(error => {
-                   
+                    console.error('Error fetching categories:', error);
                 });
-        } else {
-           
         }
     }
 
     // Event listener for country select change
     countrySelect.addEventListener('change', filterCategories);
     
+    // Initialize multiselect for categories and destinations
+    setTimeout(() => {
+        new MultiSelect('category', {
+            placeholder: 'Select Categories'
+        });
+        new MultiSelect('destinations', {
+            placeholder: 'Select Destinations'
+        });
+    }, 100);
 
-    // Initial call to filter categories based on any pre-selected country (e.g., from oldInput)
-    // This is crucial for when the page loads with old input from a validation error.
-    if (countrySelect.value) { // Only run if a country is already selected
-       
+    // Initial call to filter categories based on any pre-selected country
+    if (countrySelect.value) {
         filterCategories();
-    } else {
-        
     }
-    // Pre-select destinations if old input is present (destinations select is rendered server-side)
-    const destinationsSelect = document.getElementById('destinations');
-    if (destinationsSelect) {
-        let oldSelectedDestinations = <%= JSON.stringify(typeof oldInput !== 'undefined' && oldInput.destinations ? oldInput.destinations : []) %>;
-        if (!Array.isArray(oldSelectedDestinations)) {
-            oldSelectedDestinations = [oldSelectedDestinations];
-        }
 
-        if (oldSelectedDestinations.length > 0) {
-            Array.from(destinationsSelect.options).forEach(opt => {
-                if (oldSelectedDestinations.includes(opt.value)) opt.selected = true;
-            });
+    // Image preview
+    const coverImageInput = document.getElementById('coverImage');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewImg = imagePreview.querySelector('img');
+
+    coverImageInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreviewImg.src = e.target.result;
+                imagePreviewImg.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreviewImg.src = '';
+            imagePreviewImg.style.display = 'none';
         }
-    }
+    });
 });
 </script>

@@ -31,21 +31,61 @@
 
             <div class="form-group">
                 <label for="destinationCategories">Categories</label>
-                <select id="destinationCategories" name="categories" class="form-control" multiple style="height:120px;">
-                    <% categories.forEach(function(cat) { %>
-                        <option value="<%= cat._id %>" <%= destination.categories && destination.categories.some(c => (c._id ? c._id.toString() : c.toString()) === cat._id.toString()) ? 'selected' : '' %>><%= cat.name %></option>
-                    <% }); %>
-                </select>
+                <div class="custom-multiselect-container">
+                    <div class="multiselect-trigger">
+                        <div class="multiselect-placeholder">Select Categories</div>
+                        <div class="multiselect-tags" id="selectedCategoriesTags"></div>
+                        <i class="fas fa-chevron-down multiselect-arrow"></i>
+                    </div>
+                    <select id="destinationCategories" name="categories" class="custom-multiselect" multiple>
+                        <% categories.forEach(function(cat) { %>
+                            <option value="<%= cat._id %>" <%= destination.categories && destination.categories.some(c => (c._id ? c._id.toString() : c.toString()) === cat._id.toString()) ? 'selected' : '' %>><%= cat.name %></option>
+                        <% }); %>
+                    </select>
+                    <div class="multiselect-dropdown" id="categoriesDropdown">
+                        <div class="multiselect-search">
+                            <input type="text" class="multiselect-search-input" placeholder="Search categories...">
+                        </div>
+                        <div class="multiselect-options" id="categoriesOptions">
+                            <% categories.forEach(function(cat) { %>
+                                <label class="multiselect-option">
+                                    <input type="checkbox" value="<%= cat._id %>" data-label="<%= cat.name %>" <%= destination.categories && destination.categories.some(c => (c._id ? c._id.toString() : c.toString()) === cat._id.toString()) ? 'checked' : '' %>>
+                                    <span><%= cat.name %></span>
+                                </label>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="coverImage">Cover Image</label>
-                <% if (destination.coverImage) { %>
-                    <div class="current-image-preview"><img src="<%= destination.coverImage %>" alt="Cover"></div>
-                    <label><input type="checkbox" name="coverImage" value="" class="remove-cover-image-checkbox"> Remove Current Cover Image
-                        <input type="hidden" name="coverImage" value="<%= destination.coverImage %>" class="preserve-cover-image"></label>
-                <% } %>
-                <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                <div class="file-upload-container">
+                    <div class="file-upload-content">
+                        <div class="file-current-image">
+                            <% if (destination.coverImage) { %>
+                                <div class="current-image-preview">
+                                    <img src="<%= destination.coverImage %>" alt="Current Cover Image">
+                                    <div class="image-actions">
+                                        <label class="image-action-label">
+                                            <input type="checkbox" name="removeImage" class="remove-cover-image-checkbox">
+                                            <span>Remove Image</span>
+                                        </label>
+                                    </div>
+                                    <input type="hidden" name="currentCoverImage" value="<%= destination.coverImage %>">
+                                </div>
+                            <% } %>
+                        </div>
+                        <div class="file-upload-box">
+                            <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Drag & drop image or click to browse</span>
+                        </div>
+                    </div>
+                    <div class="file-preview" id="imagePreview">
+                        <img src="" alt="Image Preview" style="display: none;">
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -73,3 +113,48 @@
         </div>
     </form>
 </div>
+
+<script src="/js/multiselect.js"></script>
+<link href="/css/multiselect.css" rel="stylesheet">
+<link href="/css/form-enhancements.css" rel="stylesheet">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize multiselect for categories
+        new MultiSelect('destinationCategories', {
+            placeholder: 'Select Categories'
+        });
+
+        // Image preview
+        const coverImageInput = document.getElementById('coverImage');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewImg = imagePreview.querySelector('img');
+        const removeCheckbox = document.querySelector('.remove-cover-image-checkbox');
+        const currentImagePreview = document.querySelector('.current-image-preview');
+
+        coverImageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreviewImg.src = e.target.result;
+                    imagePreviewImg.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreviewImg.src = '';
+                imagePreviewImg.style.display = 'none';
+            }
+        });
+
+        if (removeCheckbox) {
+            removeCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    currentImagePreview.style.opacity = '0.5';
+                } else {
+                    currentImagePreview.style.opacity = '1';
+                }
+            });
+        }
+    });
+</script>
