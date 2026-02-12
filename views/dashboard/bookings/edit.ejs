@@ -1,0 +1,78 @@
+<%- include('../../partials/dashboard/header') %>
+
+<div class="container-fluid">
+  <div class="row">
+    <%- include('../../partials/dashboard/sidebar') %>
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Edit Booking - <%= booking.referenceNumber %></h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <a href="/dashboard/bookings" class="btn btn-sm btn-outline-secondary">Back to Bookings</a>
+          </div>
+        </div>
+      </div>
+
+      <%- include('../../partials/flash-messages') %>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Booking Information</h5>
+            </div>
+            <div class="card-body">
+              <form action="/dashboard/bookings/<%= booking._id %>" method="POST">
+                <input type="hidden" name="_method" value="PUT">
+                
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="firstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstName" name="firstName" value="<%= booking.firstName %>" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="lastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="lastName" name="lastName" value="<%= booking.lastName %>" required>
+                  </div>
+                </div>
+                
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="<%= booking.email %>" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="phone" name="phone" value="<%= booking.phone %>" required>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="country" class="form-label">Country</label>
+                  <select class="form-select" id="country" name="country" required>
+                    <option value="">Select Country</option>
+                    <% countries.forEach(country => { %>
+                      <option value="<%= country.name %>" <%= booking.country === country.name ? 'selected' : '' %>><%= country.name %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="tourId" class="form-label">Tour</label>
+                  <select class="form-select" id="tourId" name="tourId" required>
+                    <option value="">Select Tour</option>
+                    <% tours.forEach(tour => { %>
+                      <option value="<%= tour._id %>" <%= booking.tour && booking.tour._id.toString() === tour._id.toString() ? 'selected' : '' %>><%= tour.title %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="tourDate" class="form-label">Tour Date</label>
+                    <input type="date" class="form-control" id="tourDate" name="tourDate" value="<%= new Date(booking.tourDate).toISOString().split('T')[0] %>" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="duration" class="form-label">Duration (Days)</label>
+                    <input type="number" class="form-control" id="duration

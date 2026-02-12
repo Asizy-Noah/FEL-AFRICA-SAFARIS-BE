@@ -1,0 +1,353 @@
+<div class="dashboard-content">
+    <form id="editPageForm" class="page-form" method="POST" action="/pages/dashboard/edit/<%= page._id %>?_method=PATCH" enctype="multipart/form-data">
+        <div class="form-section">
+            <h3 class="section-title">Basic Information</h3>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="pageTitle">Page Title</label>
+                    <input type="text" id="pageTitle" name="title" class="form-control" value="<%= typeof oldInput !== 'undefined' && oldInput.title ? oldInput.title : page.title %>" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="pageSlug">URL Slug</label>
+                    <input type="text" id="pageSlug" name="slug" class="form-control" value="<%= typeof oldInput !== 'undefined' && oldInput.slug ? oldInput.slug : page.slug %>" required>
+                    <small class="form-text text-muted">Example: about-us</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="pageType">Page Type</label>
+                    <select id="pageType" name="pageType" class="form-control" required>
+                        <option value="">Select Page Type</option>
+                        <% pageTypes.forEach(type => { %>
+                            <option value="<%= type %>" <%= (typeof oldInput !== 'undefined' && oldInput.pageType === type) ? 'selected' : (page.pageType === type ? 'selected' : '') %>>
+                                <%= type.charAt(0).toUpperCase() + type.slice(1) %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="pageStatus">Status</label>
+                    <select id="pageStatus" name="status" class="form-control" required>
+                        <% pageStatuses.forEach(status => { %>
+                            <option value="<%= status %>" <%= (typeof oldInput !== 'undefined' && oldInput.status === status) ? 'selected' : (page.status === status ? 'selected' : '') %>>
+                                <%= status.charAt(0).toUpperCase() + status.slice(1) %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="pageDescription">Short Description</label>
+                <textarea id="pageDescription" name="description" class="form-control" rows="3" maxlength="200" required><%= typeof oldInput !== 'undefined' && oldInput.description ? oldInput.description : page.description %></textarea>
+                <small class="form-text text-muted">Brief description (max 200 characters)</small>
+            </div>
+
+            <div class="form-group">
+                <label>Page Content</label>
+                <div id="pageContentContainer">
+                    </div>
+
+                <button type="button" class="btn btn-outline-primary mt-3" id="addContentBlockBtn">
+                    Add Content Block
+                </button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">Page Images</h3>
+            <div class="form-group">
+                <label for="pageCoverImage">Cover Image</label>
+                <div class="file-upload-container">
+                    <input type="file" id="pageCoverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop image or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="coverImagePreview">
+                        <% if (typeof oldInput !== 'undefined' && oldInput.coverImage) { %>
+                            <img src="<%= oldInput.coverImage %>" class="preview-image" alt="Cover Image Preview">
+                        <% } else if (page.coverImage) { %>
+                            <img src="<%= page.coverImage %>" class="preview-image" alt="Current Cover Image">
+                            <button type="button" class="btn btn-sm btn-danger remove-current-image-btn" data-input-name="coverImage" data-preview-selector="#coverImagePreview">Remove Current</button>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="pageGalleryImages">Additional Images</label>
+                <div class="file-upload-container">
+                    <input type="file" id="pageGalleryImages" name="galleryImages" class="file-input" accept="image/*" multiple>
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop images or click to browse (multiple)</span>
+                    </div>
+                    <div class="file-preview" id="galleryImagesPreview">
+                        <% if (typeof oldInput !== 'undefined' && oldInput.galleryImages && oldInput.galleryImages.length > 0) { %>
+                            <% oldInput.galleryImages.forEach(image => { %>
+                                <div class="gallery-image-wrapper">
+                                    <img src="<%= image %>" class="preview-image" alt="Gallery Image">
+                                    <button type="button" class="btn btn-sm btn-danger remove-gallery-image-btn" data-image-url="<%= image %>">Remove</button>
+                                </div>
+                            <% }); %>
+                        <% } else if (page.galleryImages && page.galleryImages.length > 0) { %>
+                            <% page.galleryImages.forEach(image => { %>
+                                <div class="gallery-image-wrapper">
+                                    <img src="<%= image %>" class="preview-image" alt="Current Gallery Image">
+                                    <button type="button" class="btn btn-sm btn-danger remove-gallery-image-btn" data-image-url="<%= image %>">Remove</button>
+                                </div>
+                            <% }); %>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">SEO Information</h3>
+            <div class="form-group">
+                <label for="seoTitle">SEO Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= typeof oldInput !== 'undefined' && oldInput.seoTitle ? oldInput.seoTitle : page.seoTitle %>">
+                <small class="form-text text-muted">Recommended length: 50-60 characters</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' && oldInput.seoDescription ? oldInput.seoDescription : page.seoDescription %></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= typeof oldInput !== 'undefined' && oldInput.seoKeywords ? oldInput.seoKeywords : (Array.isArray(page.seoKeywords) ? page.seoKeywords.join(', ') : (page.seoKeywords || '')) %>">
+                <small class="form-text text-muted">Separate keywords with commas</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoCanonicalUrl">Canonical URL</label>
+                <input type="text" id="seoCanonicalUrl" name="seoCanonicalUrl" class="form-control" value="<%= typeof oldInput !== 'undefined' && oldInput.seoCanonicalUrl ? oldInput.seoCanonicalUrl : page.seoCanonicalUrl %>">
+                <small class="form-text text-muted">Specify the preferred URL for this page</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoOgImage">Open Graph Image (Social Share)</label>
+                <input type="text" id="seoOgImage" name="seoOgImage" class="form-control" value="<%= typeof oldInput !== 'undefined' && oldInput.seoOgImage ? oldInput.seoOgImage : page.seoOgImage %>">
+                <small class="form-text text-muted">URL of image for social media sharing</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='/pages/dashboard'">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Page</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Debugging: Log the page object as passed to EJS
+    console.log("Page Object from EJS (Server-side data):", <%- JSON.stringify(page || {}) %>);
+    console.log("Content Blocks from EJS (Server-side data):", <%- JSON.stringify(page.contentBlocks || []) %>);
+
+    const contentContainer = document.getElementById("pageContentContainer");
+    const addContentBtn = document.getElementById("addContentBlockBtn");
+    let contentCounter = 0; // Initialize at 0, as we'll loop through existing blocks first
+    const quillInstances = {};
+
+    // Function to initialize Quill editor and attach change listener
+    function initializeQuillEditor(editorId, inputId, initialContent = '') {
+        const quill = new Quill(`#${editorId}`, {
+            theme: 'snow'
+        });
+
+        quillInstances[editorId] = { quill, inputId };
+
+        if (initialContent) {
+            quill.clipboard.dangerouslyPasteHTML(initialContent);
+        }
+
+        quill.on('text-change', () => {
+            document.getElementById(inputId).value = quill.root.innerHTML;
+        });
+
+        document.getElementById(inputId).value = quill.root.innerHTML;
+        console.log(`Quill editor ${editorId} initialized. Initial input value: ${document.getElementById(inputId).value.length} chars.`);
+    }
+
+    // Function to create a new content block with editor and image input
+    function createContentBlock(initialContent = '') { // Removed initialImage parameter
+        const currentBlockIndex = contentCounter++; // Increment AFTER using current value
+        const editorId = `quill-editor-${currentBlockIndex}`;
+        const inputId = `content-input-${currentBlockIndex}`;
+        // REMOVED: imageHiddenInputName
+
+        console.log(`Creating block ${currentBlockIndex}: EditorID - ${editorId}, InputID - ${inputId}, InitialContent length - ${initialContent ? initialContent.length : 0}`);
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "content-block mb-4 p-3 border rounded shadow-sm";
+        wrapper.innerHTML = `
+            <div class="form-group">
+                <label for="${editorId}">Content Block ${currentBlockIndex + 1}</label>
+                <div id="${editorId}" class="editor-container"></div>
+                <input type="hidden" name="contentBlocks[${currentBlockIndex}][content]" id="${inputId}">
+                <input type="hidden" name="contentBlocks[${currentBlockIndex}][type]" value="text">
+                </div>
+
+            <button type="button" class="btn btn-sm btn-danger remove-block-btn mt-3">Remove Content Block</button>
+        `;
+
+        contentContainer.appendChild(wrapper);
+        initializeQuillEditor(editorId, inputId, initialContent);
+
+        // Attach event listener for the remove block button
+        wrapper.querySelector(".remove-block-btn").addEventListener("click", () => {
+            console.log(`Removing block ${currentBlockIndex}`);
+            const editorDiv = wrapper.querySelector('.editor-container');
+            if (editorDiv && quillInstances[editorDiv.id]) {
+                delete quillInstances[editorDiv.id];
+            }
+            wrapper.remove();
+        });
+
+        // REMOVED: Attach event listener for removing existing block image
+    }
+
+    // --- DOMContentLoaded for initial setup and existing data ---
+    window.addEventListener("DOMContentLoaded", () => {
+        const pageContentBlocksData = <%- JSON.stringify(page.contentBlocks || []) %>;
+        console.log("pageContentBlocksData (JS variable):", pageContentBlocksData);
+
+        if (pageContentBlocksData.length > 0) {
+            contentCounter = 0; // Ensure counter starts fresh for existing blocks
+            pageContentBlocksData.forEach((block) => { // Removed 'index' from forEach as it's not used directly
+                createContentBlock(block.content || ''); // Only pass content
+            });
+        } else {
+            console.log("No existing content blocks found, creating one empty block.");
+            createContentBlock();
+        }
+
+        // --- Handle existing image removals (Cover and Gallery) ---
+    // This part is largely fine for *explicit* removals via the "Remove Current" button.
+    const removeCoverBtn = document.querySelector("#coverImagePreview .remove-current-image-btn");
+    if (removeCoverBtn) {
+        removeCoverBtn.addEventListener("click", (e) => {
+            console.log("Removing cover image via button.");
+            const btn = e.currentTarget; // Use currentTarget to ensure you get the element the listener is on
+            const inputName = btn.dataset.inputName;
+            const previewContainer = document.querySelector(btn.dataset.previewSelector);
+
+            // Add hidden input to tell server to clear the image
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = inputName;
+            hiddenInput.value = ''; // Send an empty string to indicate removal
+            document.getElementById('editPageForm').appendChild(hiddenInput);
+
+            // Clear the preview area
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+            }
+            btn.remove(); // Remove the button itself
+        });
+    }
+
+    document.querySelectorAll(".remove-gallery-image-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const clickedBtn = e.currentTarget; // Use currentTarget
+            const imageUrl = clickedBtn.dataset.imageUrl;
+            const wrapper = clickedBtn.closest(".gallery-image-wrapper");
+            console.log(`Removing gallery image: ${imageUrl}`);
+
+            // Add hidden input to tell server which image URL to remove
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'removedGalleryImages'; // Use a single name for all removed images
+            hiddenInput.value = imageUrl;
+            document.getElementById('editPageForm').appendChild(hiddenInput);
+
+            if (wrapper) {
+                wrapper.remove(); // Remove the image preview from the DOM
+            }
+        });
+    });
+
+    // --- Event listeners for file input previews (Cover & Gallery) ---
+    const coverImageInput = document.getElementById('pageCoverImage');
+    const coverImagePreview = document.getElementById('coverImagePreview');
+    const galleryImagesInput = document.getElementById('pageGalleryImages');
+    const galleryImagesPreview = document.getElementById('galleryImagesPreview');
+
+    if (coverImageInput) {
+        coverImageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // Clear the existing content completely before adding the new preview
+                    coverImagePreview.innerHTML = `<img src="${event.target.result}" class="preview-image" alt="New Cover Image Preview">`;
+
+                    // Remove the "Remove Current" button if it exists, as it's now irrelevant for the new preview
+                    const existingRemoveBtn = coverImagePreview.querySelector(".remove-current-image-btn");
+                    if (existingRemoveBtn) {
+                        existingRemoveBtn.remove();
+                    }
+
+                    // Remove the hidden input that might have been added by the "Remove Current" button click
+                    // This handles the case where a user first clicks 'Remove' then uploads a new image.
+                    const hiddenRemoveInput = document.querySelector('input[name="coverImage"][value=""]');
+                    if (hiddenRemoveInput) {
+                        hiddenRemoveInput.remove();
+                    }
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            } else {
+                // If no file is selected (e.g., user opens dialog and cancels), clear the preview
+                coverImagePreview.innerHTML = '';
+                // You might want to re-add the original image if available here, or a placeholder
+                // For simplicity, we just clear it for now.
+            }
+        });
+    }
+
+    if (galleryImagesInput) {
+        galleryImagesInput.addEventListener('change', (e) => {
+            // Remove *all* previously generated new image previews
+            const newImagePreviews = galleryImagesPreview.querySelectorAll('.new-gallery-image-preview');
+            newImagePreviews.forEach(el => el.remove());
+
+            if (e.target.files && e.target.files.length > 0) {
+                Array.from(e.target.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        // Append new previews to the existing galleryImagesPreview container
+                        // Existing images from the database will remain unless explicitly removed by their button
+                        galleryImagesPreview.innerHTML += `
+                            <div class="gallery-image-wrapper new-gallery-image-preview">
+                                <img src="${event.target.result}" class="preview-image" alt="New Gallery Image">
+                            </div>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+    }
+});
+
+    // --- Add New Content Block Button Listener ---
+    addContentBtn.addEventListener("click", () => {
+        createContentBlock();
+    });
+
+    // --- Form Submission Logic ---
+    document.getElementById("editPageForm").addEventListener("submit", (e) => {
+        Object.values(quillInstances).forEach(({ quill, inputId }) => {
+            const hiddenInput = document.getElementById(inputId);
+            if (hiddenInput) {
+                hiddenInput.value = quill.root.innerHTML;
+            }
+        });
+        console.log("Submitting form data for update...");
+    });
+</script>

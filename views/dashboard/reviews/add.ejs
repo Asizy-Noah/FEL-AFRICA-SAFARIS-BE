@@ -1,0 +1,117 @@
+<div class="container-fluid">
+    <div class="row">
+        <%- include('../../partials/dashboard/sidebar') %>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Add New Review</h1>
+            </div>
+
+            <a href="/dashboard/reviews" class="btn btn-secondary mb-3"><i class="bi bi-arrow-left"></i> Back to Reviews</a>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <form action="reviews/dashboard/add" method="POST">
+                                <div class="row g-3">
+                                    
+                                    <div class="col-md-6">
+                                        <label for="source" class="form-label">Review Source</label>
+                                        <select class="form-select" id="source" name="source" required>
+                                            <option value="/img/roads_of_adventure_logo.png" selected>Internal (Website)</option>
+                                            <option value="/img/google-logo.jpeg">Google</option>
+                                            <option value="/img/safari-booking.png">SafariBookings</option>
+                                            <option value="/img/trip-advisor-logo.png">Trip Advisor</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6" style="display: none;">
+                                        <label class="form-label">Source Logo Preview</label>
+                                        <div>
+                                            <img id="source-logo-preview" src="/img/your-site-logo.png" alt="Source Logo" class="rounded-circle border p-1" style="width: 40px; height: 40px; object-fit: cover;">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="rating" class="form-label">Rating</label>
+                                        <select class="form-select" id="rating" name="rating" required>
+                                            <option value="5.0" selected>5.0 Stars</option>
+                                            <option value="4.5">4.5 Stars</option>
+                                            <option value="4.0">4.0 Stars</option>
+                                            <option value="3.5">3.5 Stars</option>
+                                            <option value="3.0">3.0 Stars</option>
+                                            <option value="2.5">2.5 Stars</option>
+                                            <option value="2.0">2.0 Stars</option>
+                                            <option value="1.5">1.5 Stars</option>
+                                            <option value="1.0">1.0 Star</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Rating Preview</label>
+                                        <div id="rating-preview" class="fs-4 text-warning">
+                                            </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="clientName" class="form-label">Client Name</label>
+                                        <input type="text" class="form-control" id="clientName" name="clientName" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Client Email (Optional)</label>
+                                        <input type="email" class="form-control" id="email" name="email">
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="title" class="form-label">Review Title (Headline)</label>
+                                        <input type="text" class="form-control" id="title" name="title" required>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="reviewDate" class="form-label">Review Date</label>
+                                        <input type="date" class="form-control" id="reviewDate" name="reviewDate" required value="<%= new Date().toISOString().substring(0, 10) %>">
+                                    </div>
+                                    
+                                    <div class="col-md-6" style="display: none;">
+                                        <label for="country" class="form-label">Country (Optional)</label>
+                                        <input type="text" class="form-control" id="country" name="country">
+                                    </div>
+
+                                    <div class="col-12" id="external-link-group">
+                                        <label for="externalLink" class="form-label">Reaview Link (Full Review URL)</label>
+                                        <input type="url" class="form-control" id="externalLink" name="externalLink" placeholder="e.g., https://www.google.com/maps/...">
+                                        <div class="form-text">Required for external reviews (Google, Trip Advisor, etc.)</div>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label for="comment" class="form-label">Review Body (Comment)</label>
+                                        <textarea class="form-control" id="comment" name="comment" rows="5" required></textarea>
+                                    </div>
+
+                                    <div class="col-md-6" style="display: none;">
+                                        <label for="tour" class="form-label">Associated Tour (Optional)</label>
+                                        <input type="text" id="tour" name="tour">
+                                    </div>
+                                    
+                                    <div class="col-md-6" style="display: none;">
+                                        <label for="status" class="form-label">Status</label>
+                                        <select class="form-select" id="status" name="status" required>
+                                            <option value="approved" selected>Approved</option>
+                                            
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Review</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>

@@ -1,0 +1,163 @@
+<div class="container-fluid">
+  <div class="row">
+    <%- include('../../partials/dashboard/sidebar') %>
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Edit Review: <%= review.title %></h1>
+      </div>
+
+      <a href="/dashboard/reviews" class="btn btn-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> Back to Reviews
+      </a>
+
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <form action="/reviews/dashboard/edit/<%= review._id %>?_method=PUT" method="POST">
+                <div class="row g-3">
+                  
+                  <!-- Review Source -->
+                  <div class="col-md-6">
+                    <label for="source" class="form-label">Review Source</label>
+                    <select class="form-select" id="source" name="source" required>
+                      <option value="internal" <%= review.source === 'internal' ? 'selected' : '' %>>Internal (Website)</option>
+                      <option value="google" <%= review.source === 'google' ? 'selected' : '' %>>Google</option>
+                      <option value="safari_bookings" <%= review.source === 'safari_bookings' ? 'selected' : '' %>>SafariBookings</option>
+                      <option value="trip_advisor" <%= review.source === 'trip_advisor' ? 'selected' : '' %>>Trip Advisor</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Source Logo Preview</label>
+                    <div>
+                      <img id="source-logo-preview"
+                           src="<%= review.source === 'google' ? '/img/google-logo.png' 
+                               : review.source === 'trip_advisor' ? '/img/tripadvisor-logo.png' 
+                               : review.source === 'safari_bookings' ? '/img/safaribookings-logo.png' 
+                               : '/img/your-site-logo.png' %>"
+                           alt="Source Logo"
+                           class="rounded-circle border p-1"
+                           style="width: 40px; height: 40px; object-fit: cover;">
+                    </div>
+                  </div>
+
+                  <!-- Rating -->
+                  <div class="col-md-6">
+                    <label for="rating" class="form-label">Rating</label>
+                    <select class="form-select" id="rating" name="rating" required>
+                      <% ['5.0','4.5','4.0','3.5','3.0','2.5','2.0','1.5','1.0'].forEach(r => { %>
+                        <option value="<%= r %>" <%= parseFloat(r) === parseFloat(review.rating) ? 'selected' : '' %>>
+                          <%= r %> Stars
+                        </option>
+                      <% }); %>
+                    </select>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Rating Preview</label>
+                    <div id="rating-preview" class="fs-4 text-warning"></div>
+                  </div>
+
+                  <!-- Client Info -->
+                  <div class="col-md-6">
+                    <label for="clientName" class="form-label">Client Name</label>
+                    <input type="text" class="form-control" id="clientName" name="clientName" value="<%= review.clientName %>" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="email" class="form-label">Client Email (Optional)</label>
+                    <input type="email" class="form-control" id="email" name="email" value="<%= review.email || '' %>">
+                  </div>
+
+                  <!-- Title -->
+                  <div class="col-12">
+                    <label for="title" class="form-label">Review Title (Headline)</label>
+                    <input type="text" class="form-control" id="title" name="title" value="<%= review.title %>" required>
+                  </div>
+
+                  <!-- Date & Country -->
+                  <div class="col-md-6">
+                    <label for="reviewDate" class="form-label">Review Date</label>
+                    <input type="date" class="form-control" id="reviewDate" name="reviewDate"
+                           value="<%= new Date(review.reviewDate).toISOString().substring(0, 10) %>" required>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="country" class="form-label">Country (Optional)</label>
+                    <input type="text" class="form-control" id="country" name="country" value="<%= review.country || '' %>">
+                  </div>
+
+                  <!-- External Link -->
+                  <div class="col-12" id="external-link-group" style="<%= ['google','trip_advisor','safari_bookings'].includes(review.source) ? '' : 'display:none;' %>">
+                    <label for="externalLink" class="form-label">External Link (Full Review URL)</label>
+                    <input type="url" class="form-control" id="externalLink" name="externalLink"
+                           value="<%= review.externalLink || '' %>" placeholder="e.g., https://www.google.com/maps/...">
+                    <div class="form-text">Required for external reviews (Google, Trip Advisor, etc.)</div>
+                  </div>
+
+                  <!-- Comment -->
+                  <div class="col-12">
+                    <label for="comment" class="form-label">Review Body (Comment)</label>
+                    <textarea class="form-control" id="comment" name="comment" rows="5" required><%= review.comment %></textarea>
+                  </div>
+
+                  <!-- Tour -->
+                  <div class="col-md-6">
+                    <label for="tour" class="form-label">Associated Tour (Optional)</label>
+                    <input type="text" id="tour" name="tour" value="<%= review.tour || '' %>>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="col-md-6">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status" required>
+                      <% ['approved','pending','rejected'].forEach(s => { %>
+                        <option value="<%= s %>" <%= review.status === s ? 'selected' : '' %>>
+                          <%= s.charAt(0).toUpperCase() + s.slice(1) %>
+                        </option>
+                      <% }); %>
+                    </select>
+                  </div>
+
+                  <!-- Submit -->
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-pencil"></i> Update Review
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // Auto-update source logo and external link visibility
+  const sourceSelect = document.getElementById('source');
+  const logoPreview = document.getElementById('source-logo-preview');
+  const linkGroup = document.getElementById('external-link-group');
+
+  const updateLogoAndLink = () => {
+    const val = sourceSelect.value;
+    if (['google','trip_advisor','safari_bookings'].includes(val)) {
+      linkGroup.style.display = 'block';
+    } else {
+      linkGroup.style.display = 'none';
+    }
+
+    logoPreview.src =
+      val === 'google' ? '/img/google-logo.png' :
+      val === 'trip_advisor' ? '/img/tripadvisor-logo.png' :
+      val === 'safari_bookings' ? '/img/safaribookings-logo.png' :
+      '/img/your-site-logo.png';
+  };
+
+  sourceSelect.addEventListener('change', updateLogoAndLink);
+  updateLogoAndLink(); // initialize
+</script>

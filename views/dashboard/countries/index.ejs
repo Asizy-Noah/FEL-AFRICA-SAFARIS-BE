@@ -1,0 +1,130 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Manage Countries</h2>
+        <div class="content-actions">
+            <a href="/countries/dashboard/countries/add" class="add-btn">
+                <i class="fas fa-plus"></i> 
+            </a>
+            <div class="search-container">
+                <form action="/countries/dashboard/countries" method="GET" class="search-form">
+                    <input type="text" name="search" class="search-input" placeholder="Search by name, overview, keywords..." id="countrySearchInput" value="<%= query.search || '' %>">
+                    <button type="submit" style="display: none;"></button> </form>
+            </div>
+            <button class="refresh-btn" onclick="location.href='/countries/dashboard/countries'">
+                <i class="fas fa-sync-alt"></i> 
+            </button>
+        </div>
+    </div>
+
+    <% if (messages.success_msg && messages.success_msg.length > 0) { %>
+        <div class="alert alert-success">
+            <%= messages.success_msg %>
+        </div>
+    <% } %>
+    <% if (messages.error_msg && messages.error_msg.length > 0) { %>
+        <div class="alert alert-danger">
+            <%= messages.error_msg %>
+        </div>
+    <% } %>
+
+    <div class="countries-grid">
+        <% if (countries && countries.length > 0) { %>
+            <% countries.forEach(country => { %>
+                <div class="country-card">
+                    <div class="country-image">
+                        <img src="<%= country.coverImage || '/img/default-country.jpg' %>" alt="<%= country.name %>">
+                    </div>
+                    <div class="country-content">
+                        <h3 class="country-title"><%= country.name %></h3>
+                        <p class="country-overview">
+                            <%= country.overview.substring(0, 150) %><% if (country.overview.length > 150) { %>...<% } %>
+                        </p>
+                    </div>
+                    <div class="country-actions">
+                        <a href="/countries/dashboard/countries/edit/<%= country._id %>" class="action-btn edit-btn">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="/countries/dashboard/countries/<%= country._id %>?_method=DELETE" method="POST">
+                            <button class="action-btn delete-btn">
+                            <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p>No countries found. <%= query.search ? 'Try a different search term.' : '' %></p>
+        <% } %>
+    </div>
+
+    <div class="pagination">
+        <%
+            const baseUrl = `/countries/dashboard/countries?search=${query.search || ''}&limit=${limit}`;
+            const displayRange = 2; // Number of pages to show around current page
+            let startPage = Math.max(1, currentPage - displayRange);
+            let endPage = Math.min(totalPages, currentPage + displayRange);
+
+            if (endPage - startPage + 1 < (displayRange * 2 + 1) && totalPages > (displayRange * 2 + 1)) {
+                if (currentPage <= displayRange) { // Near beginning
+                    endPage = Math.min(totalPages, (displayRange * 2 + 1));
+                } else if (currentPage + displayRange >= totalPages) { // Near end
+                    startPage = Math.max(1, totalPages - (displayRange * 2));
+                }
+            }
+        %>
+
+        <button class="pagination-btn" <%= currentPage === 1 ? 'disabled' : '' %> onclick="location.href='<%= baseUrl %>&page=<%= currentPage - 1 %>'">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <% if (startPage > 1) { %>
+            <button class="pagination-btn" onclick="location.href='<%= baseUrl %>&page=1'">1</button>
+            <% if (startPage > 2) { %>
+                <span class="pagination-dots">...</span>
+            <% } %>
+        <% } %>
+
+        <% for (let i = startPage; i <= endPage; i++) { %>
+            <button class="pagination-btn <%= i === currentPage ? 'active' : '' %>" onclick="location.href='<%= baseUrl %>&page=<%= i %>'">
+                <%= i %>
+            </button>
+        <% } %>
+
+        <% if (endPage < totalPages) { %>
+            <% if (endPage < totalPages - 1) { %>
+                <span class="pagination-dots">...</span>
+            <% } %>
+            <button class="pagination-btn" onclick="location.href='<%= baseUrl %>&page=<%= totalPages %>'">
+                <%= totalPages %>
+            </button>
+        <% } %>
+
+        <button class="pagination-btn" <%= currentPage === totalPages ? 'disabled' : '' %> onclick="location.href='<%= baseUrl %>&page=<%= currentPage + 1 %>'">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+
+        // --- Delete Country Button ---
+        const deleteCountryBtn = document.getElementById('deleteCountryBtn');
+        if (deleteCountryBtn) {
+            deleteCountryBtn.addEventListener('click', () => {
+                const countryId = deleteCountryBtn.dataset.countryId;
+                const countryName = deleteCountryBtn.dataset.countryName;
+
+                if (confirm(`Are you sure you want to delete the country: ${countryName}? This action cannot be undone.`)) {
+                    // Create a temporary form to submit a GET request for deletion
+                    const form = document.createElement('form');
+                    form.method = 'GET';
+                    form.action = `/countries/dashboard/countries/delete/${countryId}`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+    });
+</script>

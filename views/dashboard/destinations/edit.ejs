@@ -1,0 +1,75 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Edit Destination: <%= destination.name %></h2>
+        <div class="content-actions">
+            <a href="/destinations/dashboard/destinations" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Destinations
+            </a>
+            <form action="/destinations/dashboard/destinations/<%= destination._id %>?_method=DELETE" method="POST" style="display:inline-block;">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+
+    <form id="editDestinationForm" action="/destinations/dashboard/destinations/edit/<%= destination._id %>?_method=PATCH" method="POST" enctype="multipart/form-data">
+        <div class="form-section">
+            <h3 class="section-title">Destination Information</h3>
+            <div class="form-group">
+                <label for="destinationName">Name</label>
+                <input type="text" id="destinationName" name="name" class="form-control" required value="<%= destination.name %>">
+            </div>
+
+            <div class="form-group">
+                <label for="destinationCountry">Country</label>
+                <select id="destinationCountry" name="country" class="form-control" required>
+                    <option value="">Select Country</option>
+                    <% countries.forEach(function(country) { %>
+                        <option value="<%= country._id %>" <%= destination.country && destination.country._id && destination.country._id.toString() === country._id.toString() ? 'selected' : (destination.country && destination.country.toString && destination.country.toString() === country._id.toString() ? 'selected' : '') %>><%= country.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="destinationCategories">Categories</label>
+                <select id="destinationCategories" name="categories" class="form-control" multiple style="height:120px;">
+                    <% categories.forEach(function(cat) { %>
+                        <option value="<%= cat._id %>" <%= destination.categories && destination.categories.some(c => (c._id ? c._id.toString() : c.toString()) === cat._id.toString()) ? 'selected' : '' %>><%= cat.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="coverImage">Cover Image</label>
+                <% if (destination.coverImage) { %>
+                    <div class="current-image-preview"><img src="<%= destination.coverImage %>" alt="Cover"></div>
+                    <label><input type="checkbox" name="coverImage" value="" class="remove-cover-image-checkbox"> Remove Current Cover Image
+                        <input type="hidden" name="coverImage" value="<%= destination.coverImage %>" class="preserve-cover-image"></label>
+                <% } %>
+                <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="6"><%= destination.description %></textarea>
+            </div>
+
+            <h3 class="section-title">SEO</h3>
+            <div class="form-group">
+                <label for="seoTitle">Meta Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= destination.seoTitle || '' %>">
+            </div>
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= destination.seoDescription || '' %></textarea>
+            </div>
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= destination.seoKeywords || '' %>">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update Destination</button>
+        </div>
+    </form>
+</div>

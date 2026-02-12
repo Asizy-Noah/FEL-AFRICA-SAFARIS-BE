@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Disallow specific paths for all crawlers
+Disallow: /auth/
+Disallow: /login/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /cms/
+# Add any other paths that should not be crawled/indexed (e.g., /private/, /temp/)
+
+Sitemap: https://www.feelafricasafaris.com/sitemap.xml

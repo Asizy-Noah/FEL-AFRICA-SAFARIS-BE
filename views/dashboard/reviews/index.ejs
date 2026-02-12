@@ -1,0 +1,151 @@
+
+
+<div class="container-fluid">
+  <div class="row">
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="content-header">
+        <h2 class="content-title">Manage Reviews</h2>
+        <div class="content-actions">
+            <a href="/reviews/dashboard/add" class="add-btn">
+                <i class="fas fa-plus"></i>
+            </a>
+            
+        </div>
+    </div>
+     <%- include('../../partials/flash-messages') %>
+
+        <div class="table-responsive">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Review Title</th>
+        <th>Rating</th>
+        <th>Comment</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (reviews.length > 0) { %>
+        <% reviews.forEach(review => { %>
+          <tr>
+            <td><%= review.title || 'Untitled Review' %></td>
+            <td>
+              <div class="stars">
+                <% for (let i = 1; i <= 5; i++) { %>
+                  <i class="bi bi-star<%= i <= review.rating ? '-fill' : '' %> text-warning"></i>
+                <% } %>
+              </div>
+            </td>
+            <td><%= review.comment.length > 50 ? review.comment.substring(0, 50) + '...' : review.comment %></td>
+            <td>
+              <span class="badge bg-<%= review.status === 'approved' ? 'success' : (review.status === 'rejected' ? 'danger' : 'warning') %>">
+                <%= review.status.charAt(0).toUpperCase() + review.status.slice(1) %>
+              </span>
+            </td>
+            <td><%= new Date(review.createdAt).toLocaleDateString() %></td>
+            <td>
+              <div class="btn-group">
+                <!-- View Button -->
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewReviewModal<%= review._id %>">
+                  <i class="bi bi-eye"></i>
+                </button>
+
+                <!-- Edit Button -->
+                <a href="/reviews/dashboard/edit/<%= review._id %>" class="btn btn-sm btn-outline-warning">
+                  <i class="bi bi-pencil"></i>
+                </a>
+
+                <% if (review.status === 'pending') { %>
+                  <form action="/dashboard/reviews/<%= review._id %>/approve" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                  </form>
+                  <form action="/dashboard/reviews/<%= review._id %>/reject" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </form>
+                <% } %>
+
+                <!-- Delete Button -->
+                <form action="/reviews/dashboard/delete/<%= review._id %>" method="GET" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this review?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+          <!-- View Review Modal -->
+          <div class="modal fade" id="viewReviewModal<%= review._id %>" tabindex="-1" aria-labelledby="viewReviewModalLabel<%= review._id %>" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="viewReviewModalLabel<%= review._id %>">Review Details</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3"><strong>Title:</strong> <%= review.title %></div>
+                  <div class="mb-3"><strong>Name:</strong> <%= review.name %></div>
+                  <div class="mb-3"><strong>Email:</strong> <%= review.email %></div>
+                  <div class="mb-3">
+                    <strong>Rating:</strong>
+                    <div class="stars">
+                      <% for (let i = 1; i <= 5; i++) { %>
+                        <i class="bi bi-star<%= i <= review.rating ? '-fill' : '' %> text-warning"></i>
+                      <% } %>
+                    </div>
+                  </div>
+                  <div class="mb-3"><strong>Comment:</strong><p><%= review.comment %></p></div>
+                  <div class="mb-3">
+                    <strong>Status:</strong>
+                    <span class="badge bg-<%= review.status === 'approved' ? 'success' : (review.status === 'rejected' ? 'danger' : 'warning') %>">
+                      <%= review.status.charAt(0).toUpperCase() + review.status.slice(1) %>
+                    </span>
+                  </div>
+                  <div class="mb-3"><strong>Date:</strong> <%= new Date(review.createdAt).toLocaleString() %></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <% if (review.status === 'pending') { %>
+                    <form action="/dashboard/reviews/<%= review._id %>/approve" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-success">Approve</button>
+                    </form>
+                    <form action="/dashboard/reviews/<%= review._id %>/reject" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-danger">Reject</button>
+                    </form>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <tr>
+          <td colspan="6" class="text-center">No reviews found</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+
+    </main>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  });
+</script>
+

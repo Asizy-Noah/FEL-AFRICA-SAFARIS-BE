@@ -1,0 +1,309 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Edit Country: <%= country.name %></h2>
+        <div class="content-actions">
+            <a href="/countries/dashboard/countries" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Countries
+            </a>
+            <button type="button" class="btn btn-danger" data-country-id="<%= country._id %>" data-country-name="<%= country.name %>" id="deleteCountryBtn">
+                <i class="fas fa-trash"></i> Delete Country
+            </button>
+        </div>
+    </div>
+
+    <form id="editCountryForm" class="country-form" action="/countries/dashboard/countries/edit/<%= country._id %>" method="POST" enctype="multipart/form-data">
+        <div class="form-section">
+            <h3 class="section-title">Country Information</h3>
+            <div class="form-group">
+                <label for="countryName">Country Name</label>
+                <input type="text" id="countryName" name="name" class="form-control" required value="<%= country.name %>">
+            </div>
+
+            <div class="form-group">
+                <label for="countryCode">Country Code (Strictly lowercase)</label>
+                <input type="text" id="countryCode" name="code" class="form-control" required value="<%= country.code %>">
+            </div>
+
+            <div class="form-group">
+                <label for="countrySlug">Country Slug (Auto generated)</label>
+                <input type="text" id="countrySlug" name="slug" class="form-control" value="<%= country.slug %>">
+                
+            </div>
+
+            <div class="form-group">
+                <label for="countryOverview">Country Caption</label>
+                <textarea id="countryOverview" name="overview" class="form-control" rows="2" required><%= country.overview %></textarea>
+                
+            </div>
+
+            <div class="form-group">
+                <label>Country Description</label>
+                <div id="countryDescriptionEditor" class="editor-container"></div>
+                <input type="hidden" name="description" id="countryDescription" value="<%= country.description %>">
+            </div>
+
+            <div class="form-group">
+                <label for="countrySummary">Country Summary</label>
+                <textarea id="countrySummary" name="summary" class="form-control" rows="2"><%= country.summary || '' %></textarea>
+                
+            </div>
+
+            <div class="form-group">
+                <label>Current Cover Image</label>
+                <% if (country.coverImage) { %>
+                    <div class="current-cover-image">
+                        <img src="<%= country.coverImage %>" alt="Current Cover Image" style="max-width: 200px; height: auto; border: 1px solid #ddd; padding: 5px;">
+                        <input type="hidden" name="coverImage" value="keep"> <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="replaceCoverImage" value="new">
+                            <label class="form-check-label" for="replaceCoverImage">
+                                Replace Current Cover Image
+                            </label>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted">No cover image currently set.</p>
+                <% } %>
+                <div class="file-upload-container mt-3" id="newCoverImageUpload" style="<%= country.coverImage ? 'display: none;' : '' %>">
+                    <label for="newCoverImageInput" class="d-block">Upload New Cover Image</label>
+                    <input type="file" id="newCoverImageInput" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop image or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="newCoverImagePreview"></div>
+                </div>
+                <small class="form-text text-muted">Select an image to replace the current cover. If multiple are uploaded, the first will be used as cover.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Gallery Images</label>
+                <div class="current-gallery-images d-flex flex-wrap gap-2 mb-3">
+                    <% if (country.galleryImages && country.galleryImages.length > 0) { %>
+                        <% country.galleryImages.forEach(image => { %>
+                            <div class="gallery-item-wrapper position-relative" data-image-path="<%= image %>">
+                                <img src="<%= image %>" alt="Gallery Image" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                                <button type="button" class="remove-gallery-image-btn btn btn-sm btn-danger position-absolute top-0 end-0" title="Remove image">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="text-muted">No gallery images currently.</p>
+                    <% } %>
+                </div>
+
+                <input type="hidden" name="removedGalleryImages" id="removedGalleryImages">
+
+                <div class="file-upload-container mt-3">
+                    <label for="newGalleryImagesInput" class="d-block">Upload Additional Gallery Images</label>
+                    <input type="file" id="newGalleryImagesInput" name="galleryImages" class="file-input" accept="image/*" multiple>
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop images or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="newGalleryImagesPreview"></div>
+                </div>
+                <small class="form-text text-muted">Add more images to the country gallery.</small>
+            </div>
+
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">SEO Information</h3>
+
+            <div class="form-group">
+                <label for="seoTitle">Meta Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= country.seoTitle || '' %>">
+                <small class="form-text text-muted">Recommended length: 50-60 characters (for browser tabs and search results).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="2"><%= country.seoDescription || '' %></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= country.seoKeywords || '' %>">
+                <small class="form-text text-muted">Separate keywords with commas (e.g., "Uganda safaris, gorilla trekking Uganda").</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='/countries/dashboard/countries'">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Country</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Rich Text Editor Initialization (e.g., Quill.js) ---
+        // Ensure Quill.js library is loaded (e.g., in your layout file)
+        const descriptionEditor = document.getElementById('countryDescriptionEditor');
+        const hiddenDescriptionInput = document.getElementById('countryDescription');
+        let quill;
+
+        if (descriptionEditor && typeof Quill !== 'undefined') {
+            quill = new Quill(descriptionEditor, {
+                theme: 'snow',
+                placeholder: 'Write the detailed description of the country here...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Set existing content from the hidden input into the editor
+            if (hiddenDescriptionInput.value) {
+                quill.root.innerHTML = hiddenDescriptionInput.value;
+            }
+
+            // Update the hidden input field when editor content changes
+            quill.on('text-change', () => {
+                hiddenDescriptionInput.value = quill.root.innerHTML;
+            });
+        } else if (descriptionEditor) {
+            console.warn("Quill.js library not found. Rich text editor will not initialize.");
+            // Fallback: If Quill.js isn't loaded, make the div a regular textarea
+            const fallbackTextarea = document.createElement('textarea');
+            fallbackTextarea.id = 'countryDescriptionFallback';
+            fallbackTextarea.name = 'description';
+            fallbackTextarea.className = 'form-control';
+            fallbackTextarea.rows = '10';
+            fallbackTextarea.placeholder = 'Write the detailed description of the country here...';
+            fallbackTextarea.value = hiddenDescriptionInput.value; // Keep existing content
+            descriptionEditor.parentNode.replaceChild(fallbackTextarea, descriptionEditor);
+            hiddenDescriptionInput.remove(); // Remove the hidden input as it's no longer needed
+        }
+
+        // --- Cover Image Replacement Logic ---
+        const replaceCoverImageCheckbox = document.getElementById('replaceCoverImage');
+        const currentCoverImageContainer = document.querySelector('.current-cover-image');
+        const newCoverImageUploadContainer = document.getElementById('newCoverImageUpload');
+        const newCoverImageInput = document.getElementById('newCoverImageInput');
+        const originalCoverImageHiddenInput = document.querySelector('.current-cover-image input[name="coverImage"]');
+
+        if (replaceCoverImageCheckbox) {
+            replaceCoverImageCheckbox.addEventListener('change', () => {
+                if (replaceCoverImageCheckbox.checked) {
+                    newCoverImageUploadContainer.style.display = 'block';
+                    // Signal to the backend that we want to replace the image
+                    if (originalCoverImageHiddenInput) {
+                        originalCoverImageHiddenInput.value = 'new';
+                    } else {
+                        // If no original cover, and checkbox is checked, ensure the name is correct for new upload
+                        // This case is unlikely if there's no original cover and checkbox is present.
+                    }
+                } else {
+                    newCoverImageUploadContainer.style.display = 'none';
+                    newCoverImageInput.value = ''; // Clear selected file
+                    document.getElementById('newCoverImagePreview').innerHTML = ''; // Clear preview
+                    // Signal to the backend to keep the current image
+                    if (originalCoverImageHiddenInput) {
+                        originalCoverImageHiddenInput.value = 'keep';
+                    }
+                }
+            });
+        }
+
+        // --- New Cover Image Preview ---
+        const newCoverImagePreview = document.getElementById('newCoverImagePreview');
+        if (newCoverImageInput && newCoverImagePreview) {
+            newCoverImageInput.addEventListener('change', (event) => {
+                newCoverImagePreview.innerHTML = '';
+                const file = event.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = file.name;
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                        newCoverImagePreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // --- Gallery Image Management ---
+        const removedGalleryImagesInput = document.getElementById('removedGalleryImages');
+        const newGalleryImagesInput = document.getElementById('newGalleryImagesInput');
+        const newGalleryImagesPreview = document.getElementById('newGalleryImagesPreview');
+        const currentGalleryImagesContainer = document.querySelector('.current-gallery-images');
+        let removedImagePaths = [];
+
+        // Handle removing existing gallery images
+        currentGalleryImagesContainer.addEventListener('click', (event) => {
+            const targetButton = event.target.closest('.remove-gallery-image-btn');
+            if (targetButton) {
+                const itemWrapper = targetButton.closest('.gallery-item-wrapper');
+                const imagePath = itemWrapper.dataset.imagePath;
+
+                if (confirm(`Are you sure you want to remove this image?`)) {
+                    removedImagePaths.push(imagePath);
+                    removedGalleryImagesInput.value = removedImagePaths.join(','); // Store paths in hidden input
+                    itemWrapper.remove(); // Remove from DOM
+                }
+            }
+        });
+
+        // Handle preview for new gallery images
+        if (newGalleryImagesInput && newGalleryImagesPreview) {
+            newGalleryImagesInput.addEventListener('change', (event) => {
+                newGalleryImagesPreview.innerHTML = ''; // Clear previous previews
+
+                const files = event.target.files;
+                if (files.length === 0) {
+                    newGalleryImagesPreview.style.display = 'none';
+                    return;
+                }
+
+                newGalleryImagesPreview.style.display = 'flex'; // Display flex for image grid
+                Array.from(files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const imgContainer = document.createElement('div');
+                            imgContainer.className = 'preview-item';
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.alt = file.name;
+                            imgContainer.appendChild(img);
+                            newGalleryImagesPreview.appendChild(imgContainer);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            });
+        }
+
+
+        // --- Delete Country Button ---
+        const deleteCountryBtn = document.getElementById('deleteCountryBtn');
+        if (deleteCountryBtn) {
+            deleteCountryBtn.addEventListener('click', () => {
+                const countryId = deleteCountryBtn.dataset.countryId;
+                const countryName = deleteCountryBtn.dataset.countryName;
+
+                if (confirm(`Are you sure you want to delete the country: ${countryName}? This action cannot be undone.`)) {
+                    // Create a temporary form to submit a GET request for deletion
+                    const form = document.createElement('form');
+                    form.method = 'GET';
+                    form.action = `/countries/dashboard/countries/delete/${countryId}`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+    });
+</script>

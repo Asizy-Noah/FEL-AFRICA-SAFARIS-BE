@@ -1,0 +1,107 @@
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-container">
+                <a href="/dashboard">
+                <img src="/img/feel_africa_safaris_logo.png" alt="Feel Africa Safaris" class="logo">
+            </a>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <li class="nav-item <%= title.includes('Dashboard') ? 'active' : '' %>">
+                <a href="/dashboard/index" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            
+            <li class="nav-item <%= title.includes('Bookings') ? 'active' : '' %>">
+                <a href="/bookings/dashboard" class="nav-link">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Bookings</span>
+                </a>
+            </li>
+
+            <% if (user.role === 'admin') { %>
+            <li class="nav-item <%= title.includes('Countries') ? 'active' : '' %>">
+                <a href="/countries/dashboard/countries" class="nav-link">
+                    <i class="fas fa-globe-africa"></i>
+                    <span>Countries</span>
+                </a>
+            </li>
+
+            <li class="nav-item <%= title.includes('Categories') ? 'active' : '' %>">
+                <a href="/categories/dashboard" class="nav-link">
+                    <i class="fas fa-tags"></i>
+                    <span>Categories</span>
+                </a>
+            </li>
+
+            <li class="nav-item <%= title.includes('Destinations') ? 'active' : '' %>">
+                <a href="/destinations/dashboard/destinations" class="nav-link">
+                    <i class="fas fa-globe-africa"></i>
+                    <span>Destinations</span>
+                </a>
+            </li>
+            <% } %>
+
+            <li class="nav-item <%= title.includes('Tours') ? 'active' : '' %>">
+                <a href="/tours/dashboard/tours" class="nav-link">
+                    <i class="fas fa-route"></i>
+                    <span>Tour Packages</span>
+                </a>
+            </li>
+
+
+            <li class="nav-item <%= title.includes('Blogs') ? 'active' : '' %>">
+                <a href="/blogs/dashboard/blogs" class="nav-link">
+                    <i class="fas fa-blog"></i>
+                    <span>Safari Updates</span>
+                </a>
+            </li>
+
+            <% if (user.role === 'admin') { %>
+            <li class="nav-item <%= title.includes('Reviews') ? 'active' : '' %>">
+                <a href="/reviews/dashboard" class="nav-link">
+                    <i class="fas fa-star"></i>
+                    <span>Reviews</span>
+                </a>
+            </li>
+
+            <li class="nav-item <%= title.includes('Pages') ? 'active' : '' %>">
+                <a href="/pages/dashboard" class="nav-link">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Pages</span>
+                </a>
+            </li>
+
+            <li class="nav-item <%= title.includes('Subscribers') ? 'active' : '' %>">
+                <a href="/subscribers/dashboard" class="nav-link">
+                    <i class="fas fa-envelope"></i>
+                    <span>Subscribers</span>
+                </a>
+            </li>
+
+            
+            <% } %>
+
+            <li class="nav-item <%= title.includes('Agents') ? 'active' : '' %>">
+                <a href="/users/dashboard/agents" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Agents</span>
+                </a>
+            </li>
+
+            <li class="nav-item logout">
+                <a href="/auth/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>

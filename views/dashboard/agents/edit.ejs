@@ -1,0 +1,100 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Edit Agent: <%= agent.name %></h2>
+        <div class="content-actions">
+            <a href="/users/dashboard/agents" class="btn btn-secondary">Back to Agents</a>
+        </div>
+    </div>
+
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success"><%= success_msg %></div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+        <div class="alert alert-danger"><%= error_msg %></div>
+    <% } %>
+
+    <div class="form-container">
+        <form action="/users/dashboard/agents/update/<%= agent._id %>?_method=PATCH" method="POST" class="needs-validation" novalidate>
+            <input type="hidden" name="_method" value="PATCH">
+
+            <div class="form-group">
+                <label for="name">Agent Name <span class="required">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" value="<%= agent.name %>" required>
+                <div class="invalid-feedback">
+                    Please enter the agent's name.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email <span class="required">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" value="<%= agent.email %>" required>
+                <div class="invalid-feedback">
+                    Please enter a valid email address.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= agent.phoneNumber || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="companyName">Company Name</label>
+                <input type="text" class="form-control" id="companyName" name="companyName" value="<%= agent.companyName || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="companyWebsite">Company Website</label>
+                <input type="url" class="form-control" id="companyWebsite" name="companyWebsite" value="<%= agent.companyWebsite || '' %>">
+                <div class="invalid-feedback">
+                    Please enter a valid URL (e.g., https://example.com).
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country</label>
+                <select class="form-control" id="country" name="country">
+                    <option value="">-- Select Country --</option>
+                    <option value="Uganda" <%= agent.country === 'Uganda' ? 'selected' : '' %>>Uganda</option>
+                    <option value="Kenya" <%= agent.country === 'Kenya' ? 'selected' : '' %>>Kenya</option>
+                    <option value="Tanzania" <%= agent.country === 'Tanzania' ? 'selected' : '' %>>Tanzania</option>
+                    <option value="Rwanda" <%= agent.country === 'Rwanda' ? 'selected' : '' %>>Rwanda</option>
+                    </select>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role <span class="required">*</span></label>
+                <select class="form-control" id="role" name="role" required>
+                    <option value="agent" <%= agent.role === 'agent' ? 'selected' : '' %>>Agent</option>
+                    <option value="admin" <%= agent.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                </select>
+                <div class="invalid-feedback">
+                    Please select a role.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Agent</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Remove password validation script, it's no longer needed here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Basic form validation (Bootstrap 5 example for custom validation styles)
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    });
+</script>

@@ -1,0 +1,169 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Manage Categories</h2>
+        <div class="content-actions">
+            <a href="/categories/dashboard/add" class="add-btn">
+                <i class="fas fa-plus"></i> 
+            </a>
+            <div class="filter-container">
+                <select class="filter-select" id="categoryCountryFilter">
+                    <option value="all" <%= query.countryId === 'all' ? 'selected' : '' %>>All Countries</option>
+                    <% if (countries && countries.length > 0) { %>
+                        <% countries.forEach(country => { %>
+                            <option value="<%= country._id %>" <%= query.countryId === country._id.toString() ? 'selected' : '' %>>
+                                <%= country.name %>
+                            </option>
+                        <% }) %> 
+                    <% } %>
+                </select>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Type to search" id="categorySearchInput" value="<%= query.search || '' %>">
+            </div>
+            <button class="refresh-btn" id="refreshCategories">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <% if (messages.success_msg && messages.success_msg.length > 0) { %>
+        <div class="alert alert-success">
+            <%= messages.success_msg %>
+        </div>
+    <% } %>
+    <% if (messages.error_msg && messages.error_msg.length > 0) { %>
+        <div class="alert alert-danger">
+            <%= messages.error_msg %>
+        </div>
+    <% } %>
+
+    <div class="categories-grid">
+        <% if (categories && categories.length > 0) { %>
+            <% categories.forEach(category => { %>
+                <div class="category-card" data-id="<%= category._id %>">
+                    <div class="category-image">
+                        <% if (category.image) { %>
+                            <img src="<%= category.image %>" alt="<%= category.name %>">
+                        <% } else { %>
+                            <img src="/img/placeholder.jpg" alt="No Image"> <% } %>
+                    </div>
+                    <div class="category-content">
+                        <h3 class="category-title"><%= category.name %></h3>
+                        <% if (category.country) { %>
+                            <p class="category-country">Country: <%= category.country.name %></p>
+                        <% } else { %>
+                            <p class="category-country">Country: All Countries</p>
+                        <% } %>
+                    </div>
+                    <div class="category-actions">
+                        <a href="/categories/dashboard/edit/<%= category._id %>" class="action-btn edit-btn">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="/categories/dashboard/delete/<%= category._id %>?_method=DELETE" method="POST">
+                            <button class="action-btn delete-btn">
+                            <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="col-12 text-center py-5">
+                <p>No categories found.</p>
+            </div>
+        <% } %>
+    </div>
+    
+    <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="pagination">
+            <button class="pagination-btn" id="prevPageBtn" <%= !pagination.hasPrevPage ? 'disabled' : '' %> data-page="<%= pagination.prevPage %>">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                <button class="pagination-btn page-number-btn <%= i === pagination.currentPage ? 'active' : '' %>" data-page="<%= i %>">
+                    <%= i %>
+                </button>
+            <% } %>
+            <button class="pagination-btn" id="nextPageBtn" <%= !pagination.hasNextPage ? 'disabled' : '' %> data-page="<%= pagination.nextPage %>">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const categorySearchInput = document.getElementById('categorySearchInput');
+        const categoryCountryFilter = document.getElementById('categoryCountryFilter');
+        const refreshCategoriesBtn = document.getElementById('refreshCategories');
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        const paginationContainer = document.querySelector('.pagination');
+
+        // Function to construct and navigate to the URL with current query parameters
+        function updateCategoriesList() {
+            const currentSearch = categorySearchInput.value;
+            const currentCountry = categoryCountryFilter.value;
+            const currentPage = document.querySelector('.pagination-btn.active')?.dataset.page || '1';
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', currentPage);
+            url.searchParams.set('limit', '10'); // Or whatever your default limit is
+            url.searchParams.set('search', currentSearch);
+            url.searchParams.set('countryId', currentCountry);
+            
+            window.location.href = url.toString();
+        }
+
+        // Event Listeners for search, filter, refresh
+        categorySearchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                updateCategoriesList();
+            }
+        });
+
+        categoryCountryFilter.addEventListener('change', () => {
+            updateCategoriesList();
+        });
+
+        refreshCategoriesBtn.addEventListener('click', () => {
+            // Reset search and filter to default and then refresh
+            categorySearchInput.value = '';
+            categoryCountryFilter.value = 'all';
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('limit', '10');
+            url.searchParams.set('search', '');
+            url.searchParams.set('countryId', 'all');
+            window.location.href = url.toString();
+        });
+
+        // Event Listener for Pagination buttons
+        if (paginationContainer) {
+            paginationContainer.addEventListener('click', (event) => {
+                const target = event.target.closest('.pagination-btn');
+                if (target && !target.disabled) {
+                    const page = target.dataset.page;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('page', page);
+                    url.searchParams.set('limit', '10'); // Keep current limit
+                    url.searchParams.set('search', categorySearchInput.value); // Keep current search
+                    url.searchParams.set('countryId', categoryCountryFilter.value); // Keep current country filter
+                    window.location.href = url.toString();
+                }
+            });
+        }
+
+        
+        // Initialize search/filter values from URL on page load
+        const urlParams = new URLSearchParams(window.location.search);
+        categorySearchInput.value = urlParams.get('search') || '';
+        categoryCountryFilter.value = urlParams.get('countryId') || 'all';
+
+        // Add 'selected' class to active page number on load
+        const activePageBtn = document.querySelector(`.page-number-btn[data-page="${urlParams.get('page') || '1'}"]`);
+        if (activePageBtn) {
+            activePageBtn.classList.add('active');
+        }
+    });
+</script>

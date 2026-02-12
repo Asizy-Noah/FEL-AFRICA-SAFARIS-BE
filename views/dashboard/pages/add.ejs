@@ -1,0 +1,193 @@
+<div class="dashboard-content">
+    <form id="addPageForm" class="page-form" method="POST" action="/pages/dashboard/add" enctype="multipart/form-data">
+              <div class="form-section">
+            <h3 class="section-title">Basic Information</h3>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="pageTitle">Page Title</label>
+                    <input type="text" id="pageTitle" name="title" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.title : '' %>" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="pageSlug">URL Slug</label>
+                    <input type="text" id="pageSlug" name="slug" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.slug : '' %>">
+                    <small class="form-text text-muted">Example: about-us (will be auto-generated if left empty)</small>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="pageType">Page Type</label>
+                    <select id="pageType" name="pageType" class="form-control" required>
+                        <option value="">Select Page Type</option>
+                        <% pageTypes.forEach(type => { %>
+                            <option value="<%= type %>" <%= (typeof oldInput !== 'undefined' && oldInput.pageType === type) ? 'selected' : '' %>>
+                                <%= type.charAt(0).toUpperCase() + type.slice(1) %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="pageStatus">Status</label>
+                    <select id="pageStatus" name="status" class="form-control" required>
+                        <% pageStatuses.forEach(status => { %>
+                            <option value="<%= status %>" <%= (typeof oldInput !== 'undefined' && (oldInput.status || 'draft') === status) ? 'selected' : '' %>>
+                                <%= status.charAt(0).toUpperCase() + status.slice(1) %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="pageDescription">Short Description</label>
+                <textarea id="pageDescription" name="description" class="form-control" rows="3" maxlength="200" required><%= typeof oldInput !== 'undefined' ? oldInput.description : '' %></textarea>
+                <small class="form-text text-muted">Brief description (max 200 characters)</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Page Content</label>
+                <div id="pageContentContainer">
+                                </div>
+          
+                <button type="button" class="btn btn-outline-primary" id="addContentBlockBtn">
+                  Add Content Block
+                </button>
+            </div>
+        </div>
+        
+              <div class="form-section">
+            <h3 class="section-title">Page Images</h3>
+            <div class="form-group">
+                <label for="pageCoverImage">Cover Image</label>
+                <div class="file-upload-container">
+                    <input type="file" id="pageCoverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop image or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="coverImagePreview">
+                        <% if (typeof oldInput !== 'undefined' && oldInput.coverImage) { %>
+                            <img src="<%= oldInput.coverImage %>" class="preview-image" alt="Cover Image Preview">
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="pageGalleryImages">Additional Images</label>
+                <div class="file-upload-container">
+                    <input type="file" id="pageGalleryImages" name="galleryImages" class="file-input" accept="image/*" multiple>
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop images or click to browse (multiple)</span>
+                    </div>
+                    <div class="file-preview" id="galleryImagesPreview"></div>
+                </div>
+            </div>
+        </div>
+        
+              <div class="form-section">
+            <h3 class="section-title">SEO Information</h3>
+            <div class="form-group">
+                <label for="seoTitle">SEO Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle : '' %>">
+                <small class="form-text text-muted">Recommended length: 50-60 characters</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription : '' %></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords : '' %>">
+                <small class="form-text text-muted">Separate keywords with commas</small>
+            </div>
+            
+        </div>
+        
+              <div class="form-actions">
+            
+            <button type="submit" class="btn btn-primary">Add Page</button>
+        </div>
+    </form>
+  </div>
+  
+  <script>
+    const contentContainer = document.getElementById("pageContentContainer");
+    const addContentBtn = document.getElementById("addContentBlockBtn");
+    let contentCounter = 0;
+    const quillInstances = {};
+  
+    function initializeQuillEditor(editorId, inputId, initialContent = '') {
+      const quill = new Quill(`#${editorId}`, {
+        theme: 'snow'
+      });
+  
+      quillInstances[editorId] = { quill, inputId };
+  
+      if (initialContent) {
+        quill.root.innerHTML = initialContent;
+      }
+  
+      quill.on('text-change', () => {
+        document.getElementById(inputId).value = quill.root.innerHTML;
+      });
+  
+      document.getElementById(inputId).value = quill.root.innerHTML;
+    }
+  
+    function createContentBlock(initialContent = '') {
+      const editorId = `quill-editor-${contentCounter}`;
+      const inputId = `content-input-${contentCounter}`;
+  
+      const wrapper = document.createElement("div");
+      wrapper.className = "content-block";
+      wrapper.innerHTML = `
+        <div id="${editorId}" class="editor-container"></div>
+        <input type="hidden" name="contentBlocks[${contentCounter}][content]" id="${inputId}">
+        <input type="hidden" name="contentBlocks[${contentCounter}][type]" value="text">         
+        <button type="button" class="btn btn-sm btn-danger remove-block-btn">Remove</button>
+      `;
+  
+      contentContainer.appendChild(wrapper);
+      initializeQuillEditor(editorId, inputId, initialContent);
+  
+      wrapper.querySelector(".remove-block-btn").addEventListener("click", () => {
+        wrapper.remove();
+        delete quillInstances[editorId];
+      });
+  
+      contentCounter++;
+    }
+  
+    window.addEventListener("DOMContentLoaded", () => {
+      initializeQuillEditor("quill-editor-0", "content-input-0");
+  
+      document.querySelectorAll(".remove-block-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const block = e.target.closest(".content-block");
+          if (block) block.remove();
+        });
+      });
+    });
+  
+    addContentBtn.addEventListener("click", () => {
+      createContentBlock();
+    });
+  
+    document.getElementById("contentForm").addEventListener("submit", (e) => {
+      // You may remove this `preventDefault` for production
+      e.preventDefault();
+  
+      // Output Quill contents
+      console.log("Submitting:");
+      Object.values(quillInstances).forEach(({ quill, inputId }) => {
+        console.log(`${inputId}: ${quill.root.innerHTML}`);
+      });
+  
+      alert("Form submitted (check console for preview).");
+    });
+  </script>

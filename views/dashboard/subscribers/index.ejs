@@ -1,0 +1,91 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Manage Subscribers</h2>
+        <div class="content-actions">
+            <div class="records-info">
+                <span class="records-count"><%= subscribers.length %></span>
+                <span class="records-label">Records</span>
+            </div>
+            <div class="search-container">
+                <form action="/subscribers/dashboard" method="GET">
+                    <input type="text" class="search-input" placeholder="Search by name or email" name="search" value="<%= query.search || '' %>">
+                    <button type="submit" class="btn btn-sm btn-primary">Search</button>
+                </form>
+            </div>
+            <div class="pagination-info">
+                <input type="number" class="page-input" value="5" min="1">
+                <span class="page-label">/Page</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table subscribers-table">
+            <thead>
+                <tr>
+                    <th class="checkbox-column">
+                        <input type="checkbox" id="selectAll">
+                    </th>
+                    <th class="sortable">Name</th>
+                    <th class="sortable">Email</th>
+                    <th class="sortable">Phone</th>
+                    <th class="sortable">Status</th>
+                    <th class="sortable">Subscribed On</th>
+                    <th class="actions-column">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (subscribers && subscribers.length > 0) { %>
+                    <% subscribers.forEach(function(subscriber) { %>
+                        <tr>
+                            <td class="checkbox-column">
+                                <input type="checkbox" class="row-checkbox" value="<%= subscriber._id %>">
+                            </td>
+                            <td><%= subscriber.name || 'N/A' %></td>
+                            <td><%= subscriber.email %></td>
+                            <td><%= subscriber.phoneNumber || 'N/A' %></td>
+                            <td>
+                                <span class="status-badge status-<%= subscriber.isActive ? 'active' : 'inactive' %>">
+                                    <%= subscriber.isActive ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td><%= new Date(subscriber.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) %></td>
+                            <td class="actions-column">
+                                <a href="/subscribers/dashboard/edit/<%= subscriber._id %>" class="btn btn-sm btn-info" title="Edit Subscriber">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form action="/subscribers/dashboard/toggle/<%= subscriber._id %>" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm <%= subscriber.isActive ? 'btn-warning' : 'btn-success' %>" title="<%= subscriber.isActive ? 'Deactivate' : 'Activate' %> Subscriber">
+                                        <i class="fas <%= subscriber.isActive ? 'fa-ban' : 'fa-check-circle' %>"></i> <%= subscriber.isActive ? 'Deactivate' : 'Activate' %>
+                                    </button>
+                                </form>
+                                <form action="/subscribers/dashboard/delete/<%= subscriber._id %>" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Subscriber">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="text-center">No subscribers found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        <button class="pagination-btn" disabled>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="pagination-btn active">1</button>
+        <button class="pagination-btn">2</button>
+        <button class="pagination-btn">3</button>
+        <span class="pagination-ellipsis">...</span>
+        <button class="pagination-btn">X</button> <button class="pagination-btn">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>

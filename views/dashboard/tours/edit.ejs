@@ -1,0 +1,955 @@
+<div class="dashboard-content">
+    <div class="form-header-actions">
+        <h2 class="form-title">Edit Tour: <%= tour.title %></h2>
+        <form action="/dashboard/tours/<%= tour._id %>?_method=DELETE" method="POST"  class="delete-form">
+            <button type="submit" class="btn btn-danger delete-btn">
+                <i class="fas fa-trash-alt"></i> Delete Tour
+            </button>
+        </form>
+    </div>
+
+    <form action="/tours/dashboard/tours/edit/<%= tour._id %>?_method=PATCH" method="POST" enctype="multipart/form-data" id="editTourForm" class="edit-tour-form">
+        <div class="form-section">
+            <div class="form-group">
+                <label for="tourTitle">Title</label>
+                <input type="text" id="tourTitle" name="title" class="form-control"
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.title : (tour.title || '') %>" required>
+            </div>
+
+            <!-- <div class="form-group">
+                <label for="tourSummary">Tour Summary (For tour card)</label>
+                <textarea id="tourSummary" name="summary" class="form-control" rows="6" placeholder="Write each highlight on a new line"><%= typeof oldInput !== 'undefined' ? oldInput.summary : (tour.summary || '') %></textarea>
+            </div> -->
+
+            <div class="form-group">
+                <label for="tourOverview">Tour Overview</label>
+                <div id="tourOverviewEditor" class="editor-container"><%- typeof oldInput !== 'undefined' ? oldInput.overview : (tour.overview || '') %></div>
+                <input type="hidden" name="overview" id="tourOverview"
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.overview : (tour.overview || '') %>">
+            </div>
+
+            <div class="column-inputs">
+                <div class="form-group">
+                    <label for="tourHighlights">Tour Highlights</label>
+                    <textarea id="tourHighlights" name="highlights" class="form-control" rows="6" ><%= typeof oldInput !== 'undefined' ? oldInput.highlights : (tour.highlights || '') %></textarea>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-md-6">
+                        <label>Cover Image</label>
+                    <% if (tour.coverImage) { %>
+                        <div class="current-image-preview">
+                            <img src="<%= tour.coverImage %>" alt="Current Cover Image">
+                            <label>
+                                <input type="checkbox" name="coverImage" value="" class="remove-cover-image-checkbox"> Remove Current Cover Image
+                                <input type="hidden" name="coverImage" value="<%= tour.coverImage %>" class="preserve-cover-image">
+                            </label>
+                        </div>
+                    <% } %>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="coverImageUpload">Upload New Cover Image</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="coverImageUpload" name="coverImage" class="file-input" accept="image/*">
+                        <div class="file-upload-box">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Drag & drop image or click to browse</span>
+                        </div>
+                        <div class="file-preview" id="coverImagePreview"></div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label for="country">Country</label>
+            <select id="country" name="country" class="form-control" required>
+                <option value="">Select Country</option>
+                <% countries.forEach(function(country) { %>
+                    <option value="<%= country._id %>"
+                        <%= (typeof oldInput !== 'undefined' && oldInput.country && oldInput.country.toString() === country._id.toString()) || (typeof tour !== 'undefined' && tour.countries && tour.countries.some(c => c._id.toString() === country._id.toString())) ? 'selected' : '' %>>
+                        <%= country.name %>
+                    </option>
+                <% }); %> 
+            </select>
+        </div>
+
+        <div class="form-group col-md-3">
+            <label for="category">Categories</label>
+            <select id="category" name="category" class="form-control" multiple required style="height:120px;">
+                <% // Categories will be populated by JS; pre-selection handled by JS based on tour or oldInput %>
+            </select>
+        </div>
+
+        <div class="form-group col-md-3">
+            <label for="destinations">Destinations</label>
+            <select id="destinations" name="destinations" class="form-control" multiple style="height:120px;">
+                <% if (typeof destinations !== 'undefined') { %>
+                    <% destinations.forEach(function(dest) { %>
+                        <option value="<%= dest._id %>" <%= (typeof oldInput !== 'undefined' && oldInput.destinations && Array.isArray(oldInput.destinations) && oldInput.destinations.includes(dest._id.toString())) || (typeof tour !== 'undefined' && tour.destinations && tour.destinations.some(d => d._id.toString() === dest._id.toString())) ? 'selected' : '' %>><%= dest.name %></option>
+                    <% }); %>
+                <% } %>
+            </select>
+        </div>
+
+        <div class="form-group col-md-3">
+            <label for="days">Number of Days</label>
+            <input type="number" id="days" name="days" class="form-control" min="1"
+                value="<%= typeof oldInput !== 'undefined' ? oldInput.days : (tour.days || '') %>" required>
+        </div>
+
+        <div class="form-group col-md-3">
+            <label for="price">Price ($)</label>
+            <input type="number" id="price" name="price" class="form-control" min="0" step="0.01"
+                value="<%= typeof oldInput !== 'undefined' ? oldInput.price : (tour.price || '') %>">
+        </div>
+    </div>
+
+    <div class="form-row">
+        
+    </div>
+
+    <div class="column-inputs">
+        <div class="form-group">
+            <label for="priceIncludes">Cost Includes</label>
+            <textarea id="priceIncludes" name="priceIncludes" class="form-control" rows="5"><%= typeof oldInput !== 'undefined' ? oldInput.priceIncludes : (tour.priceIncludes || '') %></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="priceExcludes">Cost Excludes</label>
+            <textarea id="priceExcludes" name="priceExcludes" class="form-control" rows="5"><%= typeof oldInput !== 'undefined' ? oldInput.priceExcludes : (tour.priceExcludes || '') %></textarea>
+        </div>
+    </div>
+</div>
+
+        <div class="form-section">
+            <h3 class="section-title">Itineraries</h3>
+            <div id="itinerariesContainer">
+                <% if (typeof oldInput !== 'undefined' && oldInput.itineraries && oldInput.itineraries.length > 0) { %>
+                    <% oldInput.itineraries.forEach(function(itinerary, index) { %>
+                        <div class="itinerary-item">
+                            <div class="itinerary-header">
+                                <h4>Itinerary <%= index + 1 %></h4>
+                                <button type="button" class="remove-itinerary-btn" title="Remove Itinerary">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-2">
+                                    <label>Day</label>
+                                    <input type="text" name="itineraries[<%= index %>][day]" class="form-control" value="<%= itinerary.day %>" required>
+                                </div>
+
+                                <div class="form-group col-md-10">
+                                    <label>Itinerary Title</label>
+                                    <input type="text" name="itineraries[<%= index %>][title]" class="form-control" value="<%= itinerary.title %>" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Itinerary Description</label>
+                                <div class="itinerary-editor editor-container"><%- itinerary.description %></div>
+                                <input type="hidden" name="itineraries[<%= index %>][description]" value="<%= itinerary.description %>">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6"> <label>Meal Plan</label> <select name="itineraries[<%= index %>][meals]" class="form-control" required> <option value="">Select Meal Plan</option> <option value="Lunch & Dinner" <%= itinerary.meals === 'Lunch & Dinner' ? 'selected' : '' %>>Lunch & Dinner</option> <option value="Breakfast, Lunch & Dinner" <%= itinerary.meals === 'Breakfast, Lunch & Dinner' ? 'selected' : '' %>>Breakfast, Lunch & Dinner</option> <option value="Breakfast & Lunch" <%= itinerary.meals === 'Breakfast & Lunch' ? 'selected' : '' %>>Breakfast & Lunch</option> <option value="Breakfast Only" <%= itinerary.meals === 'Breakfast Only' ? 'selected' : '' %>>Breakfast Only</option> </select> </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Accommodation</label>
+                                    <input type="text" name="itineraries[<%= index %>][accommodation]" class="form-control" placeholder="e.g., Serena Lodge or similar" value="<%= itinerary.accommodation %>">
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else if (tour.itineraries && tour.itineraries.length > 0) { %>
+                    <% tour.itineraries.forEach(function(itinerary, index) { %>
+                        <div class="itinerary-item">
+                            <div class="itinerary-header">
+                                <h4>Itinerary <%= index + 1 %></h4>
+                                <button type="button" class="remove-itinerary-btn" title="Remove Itinerary">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-2">
+                                    <label>Day</label>
+                                    <input type="text" name="itineraries[<%= index %>][day]" class="form-control" min="1" value="<%= itinerary.day %>" required>
+                                </div>
+
+                                <div class="form-group col-md-10">
+                                    <label>Itinerary Title</label>
+                                    <input type="text" name="itineraries[<%= index %>][title]" class="form-control" value="<%= itinerary.title %>" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Itinerary Description</label>
+                                <div class="itinerary-editor editor-container"><%- itinerary.description %></div>
+                                <input type="hidden" name="itineraries[<%= index %>][description]" value="<%= itinerary.description %>">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6"> <label>Meal Plan</label> <select name="itineraries[<%= index %>][meals]" class="form-control" required> <option value="">Select Meal Plan</option> <option value="Lunch & Dinner" <%= itinerary.meals === 'Lunch & Dinner' ? 'selected' : '' %>>Lunch & Dinner</option> <option value="Breakfast, Lunch & Dinner" <%= itinerary.meals === 'Breakfast, Lunch & Dinner' ? 'selected' : '' %>>Breakfast, Lunch & Dinner</option> <option value="Breakfast & Lunch" <%= itinerary.meals === 'Breakfast & Lunch' ? 'selected' : '' %>>Breakfast & Lunch</option> <option value="Breakfast Only" <%= itinerary.meals === 'Breakfast Only' ? 'selected' : '' %>>Breakfast Only</option> </select> </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Accommodation</label>
+                                    <input type="text" name="itineraries[<%= index %>][accommodation]" class="form-control" placeholder="e.g., Serena Lodge or similar" value="<%= itinerary.accommodation %>">
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="itinerary-item">
+                        <div class="itinerary-header">
+                            <h4>Itinerary 1</h4>
+                            <button type="button" class="remove-itinerary-btn" title="Remove Itinerary">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-2">
+                                <label>Day</label>
+                                <input type="text" name="itineraries[0][day]" class="form-control" min="1" value="1" required>
+                            </div>
+
+                            <div class="form-group col-md-10">
+                                <label>Itinerary Title</label>
+                                <input type="text" name="itineraries[0][title]" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Itinerary Description</label>
+                            <div class="itinerary-editor editor-container"></div>
+                            <input type="hidden" name="itineraries[0][description]">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Meal Plan</label>
+                                <select name="itineraries[0][mealPlan]" class="form-control" required>
+                                    <option value="">Select Meal Plan</option>
+                                    <option value="Lunch & Dinner">Lunch & Dinner</option>
+                                    <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch & Dinner</option>
+                                    <option value="Breakfast & Lunch">Breakfast & Lunch</option>
+                                    <option value="Breakfast Only">Breakfast Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label>Accommodation</label>
+                                <input type="text" name="itineraries[0][accommodation]" class="form-control" placeholder="e.g., Serena Lodge or similar">
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <button type="button" id="addItineraryBtn" class="btn btn-outline">
+                <i class="fas fa-plus"></i> Add Itinerary
+            </button>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">SEO Information</h3>
+
+            <div class="form-group">
+                <label for="seoTitle">Meta Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control"
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle : (tour.seoTitle || '') %>" placeholder="Recommended length: 50-60 characters">
+            </div>
+
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription : (tour.seoDescription || '') %>Recommended length: 150-160 characters</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control"
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords : (tour.seoKeywords || '') %>" placeholder="Separate keywords with commas"> 
+            </div>
+
+            <div class="form-group">
+                <label for="seoOgImage">Open Graph Image URL</label>
+                <input type="url" id="seoOgImage" name="seoOgImage" class="form-control"
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoOgImage : (tour.seoOgImage || '') %>" placeholder="Image for social media sharing (e.g., Facebook, Twitter). Full URL">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update Tour Package</button>
+        </div>
+    </form>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Rich Text Editor Initialization (Quill.js example) ---
+        // For main tour overview
+        const tourOverviewEditor = document.getElementById('tourOverviewEditor');
+        const tourOverviewInput = document.getElementById('tourOverview');
+        if (tourOverviewEditor) {
+            const quillOverview = new Quill(tourOverviewEditor, {
+                theme: 'snow'
+            });
+            // Set initial content if oldInput or tour.overview exists
+            const initialOverviewContent = tourOverviewInput.value;
+            if (initialOverviewContent) {
+                quillOverview.root.innerHTML = initialOverviewContent;
+            }
+            quillOverview.on('text-change', () => {
+                tourOverviewInput.value = quillOverview.root.innerHTML;
+            });
+        }
+
+        // For itinerary descriptions (needs to be dynamic)
+        function initializeItineraryEditor(editorContainer, hiddenInput) {
+            const quillItinerary = new Quill(editorContainer, {
+                theme: 'snow'
+            });
+            const initialItineraryContent = hiddenInput.value;
+            if (initialItineraryContent) {
+                quillItinerary.root.innerHTML = initialItineraryContent;
+            }
+            quillItinerary.on('text-change', () => {
+                hiddenInput.value = quillItinerary.root.innerHTML;
+            });
+        }
+
+        // Initialize existing itinerary editors
+        document.querySelectorAll('.itinerary-item').forEach(item => {
+            const editorContainer = item.querySelector('.itinerary-editor');
+            const hiddenInput = item.querySelector('input[name^="itineraries["][name$="][description]"]');
+            if (editorContainer && hiddenInput) {
+                initializeItineraryEditor(editorContainer, hiddenInput);
+            }
+        });
+
+
+        // --- Dynamic Itineraries ---
+        let itineraryIndex = document.querySelectorAll('.itinerary-item').length;
+        if (itineraryIndex === 0) { // If no itineraries exist, start from 0
+            itineraryIndex = 0;
+        } else { // If existing itineraries, start from the next index
+             itineraryIndex = document.querySelectorAll('.itinerary-item').length;
+        }
+
+        document.getElementById('addItineraryBtn').addEventListener('click', function() {
+            const container = document.getElementById('itinerariesContainer');
+            const newItem = document.createElement('div');
+            newItem.classList.add('itinerary-item');
+            newItem.innerHTML = `
+                <div class="itinerary-header">
+                    <h4>Itinerary ${itineraryIndex + 1}</h4>
+                    <button type="button" class="remove-itinerary-btn" title="Remove Itinerary">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-2">
+                        <label>Day</label>
+                        <input type="text" name="itineraries[${itineraryIndex}][day]" class="form-control"  value="${itineraryIndex + 1}" required>
+                    </div>
+                    <div class="form-group col-md-10">
+                        <label>Itinerary Title</label>
+                        <input type="text" name="itineraries[${itineraryIndex}][title]" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Itinerary Description</label>
+                    <div class="itinerary-editor editor-container"></div>
+                    <input type="hidden" name="itineraries[${itineraryIndex}][description]">
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Meal Plan</label>
+                        <select name="itineraries[${itineraryIndex}][mealPlan]" class="form-control" required>
+                            <option value="">Select Meal Plan</option>
+                            <option value="Lunch & Dinner">Lunch & Dinner</option>
+                            <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch & Dinner</option>
+                            <option value="Breakfast & Lunch">Breakfast & Lunch</option>
+                            <option value="Breakfast Only">Breakfast Only</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Accommodation</label>
+                        <input type="text" name="itineraries[${itineraryIndex}][accommodation]" class="form-control" placeholder="e.g., Serena Lodge or similar">
+                    </div>
+                </div>
+            `;
+            container.appendChild(newItem);
+
+            // Initialize Quill for the newly added itinerary
+            const newEditorContainer = newItem.querySelector('.itinerary-editor');
+            const newHiddenInput = newItem.querySelector('input[name^="itineraries["][name$="][description]"]');
+            if (newEditorContainer && newHiddenInput) {
+                initializeItineraryEditor(newEditorContainer, newHiddenInput);
+            }
+
+            itineraryIndex++; // Increment index for next item
+            updateItineraryNumbers();
+        });
+
+        // Remove Itinerary
+        document.getElementById('itinerariesContainer').addEventListener('click', function(event) {
+            if (event.target.closest('.remove-itinerary-btn')) {
+                const itemToRemove = event.target.closest('.itinerary-item');
+                itemToRemove.remove();
+                updateItineraryNumbers();
+            }
+        });
+
+        function updateItineraryNumbers() {
+            const items = document.querySelectorAll('.itinerary-item');
+            items.forEach((item, index) => {
+                const header = item.querySelector('.itinerary-header h4');
+                if (header) {
+                    header.textContent = `Itinerary ${index + 1}`;
+                }
+                // Update names of inputs to maintain correct array indexing
+                item.querySelectorAll('input, select').forEach(input => {
+                    const nameAttr = input.getAttribute('name');
+                    if (nameAttr && nameAttr.startsWith('itineraries[')) {
+                        input.setAttribute('name', nameAttr.replace(/itineraries\[\d+\]/, `itineraries[${index}]`));
+                    }
+                });
+            });
+        }
+
+
+        // --- File Upload Previews (Cover Image and Gallery) ---
+        function setupImagePreview(inputFileId, previewContainerId, isMultiple = false) {
+            const inputFile = document.getElementById(inputFileId);
+            const previewContainer = document.getElementById(previewContainerId);
+
+            if (!inputFile || !previewContainer) return;
+
+            inputFile.addEventListener('change', function() {
+                previewContainer.innerHTML = ''; // Clear existing previews
+
+                if (this.files && this.files[0]) {
+                    if (isMultiple) {
+                        Array.from(this.files).forEach(file => {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const imgDiv = document.createElement('div');
+                                imgDiv.classList.add('image-preview-item');
+                                imgDiv.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                                previewContainer.appendChild(imgDiv);
+                            };
+                            reader.readAsDataURL(file);
+                        });
+                    } else {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            previewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                }
+            });
+        }
+
+        setupImagePreview('coverImageUpload', 'coverImagePreview');
+        setupImagePreview('galleryImageUpload', 'galleryImagesPreview', true);
+
+
+        // --- Cover Image Removal Logic ---
+        const removeCoverImageCheckbox = document.querySelector('.remove-cover-image-checkbox');
+        const preserveCoverImageInput = document.querySelector('.preserve-cover-image');
+        const coverImageUploadInput = document.getElementById('coverImageUpload'); // The new file input
+        const coverImagePreview = document.getElementById('coverImagePreview'); // The preview for new uploads
+
+        if (removeCoverImageCheckbox && preserveCoverImageInput && coverImageUploadInput) {
+            removeCoverImageCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // If checked, user wants to remove current image
+                    preserveCoverImageInput.name = ''; // Prevent sending the old image path
+                    preserveCoverImageInput.value = ''; // Ensure value is empty for DTO
+                    coverImageUploadInput.required = false; // New upload is not required if removing old
+                    coverImageUploadInput.value = ''; // Clear any pending file selection
+                    coverImagePreview.innerHTML = ''; // Clear preview area for new uploads
+                } else {
+                    // If unchecked, user wants to keep current image (or it's being added)
+                    preserveCoverImageInput.name = 'coverImage'; // Re-enable sending the old path
+                    coverImageUploadInput.required = false; // New upload still optional
+                }
+            });
+
+            // If a new cover image is selected, uncheck the "remove" checkbox
+            coverImageUploadInput.addEventListener('change', function() {
+                if (this.files.length > 0 && removeCoverImageCheckbox) {
+                    removeCoverImageCheckbox.checked = false;
+                    preserveCoverImageInput.name = ''; // Don't send old path if new one is selected
+                } else if (this.files.length === 0 && removeCoverImageCheckbox && !removeCoverImageCheckbox.checked) {
+                     // If file selection is cleared and "remove" is not checked, re-enable sending old path
+                     preserveCoverImageInput.name = 'coverImage';
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('country');
+    const categorySelect = document.getElementById('category');
+
+    
+
+    function filterCategories() {
+        const selectedCountryId = countrySelect.value;
+       
+        // Clear existing categories (except the default "Select Category")
+        categorySelect.innerHTML = '<option value="">Select Category</option>';
+       
+
+        if (selectedCountryId) {
+            const apiUrl = `/api/categories/by-country/${selectedCountryId}`;
+        
+
+            fetch(apiUrl)
+                .then(response => {
+                   
+                    if (!response.ok) {
+                        console.error('Edit Form Script: Network response was not ok. Status:', response.status, 'Status Text:', response.statusText);
+                        return response.text().then(text => { throw new Error('HTTP error ' + response.status + ': ' + text); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                   
+
+                    if (data.data && Array.isArray(data.data)) {
+                      
+                        if (data.data.length === 0) {
+                            console.warn('Edit Form Script: No categories found for this country.');
+                        }
+
+                        data.data.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category._id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                       
+
+                        
+                        let oldSelectedCategory = '';
+                        <% if (typeof oldInput !== 'undefined' && oldInput.category) { %>
+                            oldSelectedCategory = '<%= oldInput.category.toString() %>';
+                        <% } else if (typeof tour !== 'undefined' && tour.category) { %>
+                            
+                            oldSelectedCategory = '<%= tour.category.toString() %>';
+                        <% } %>
+
+                        
+
+                        if (oldSelectedCategory) {
+                            const optionExists = Array.from(categorySelect.options).some(option => option.value === oldSelectedCategory);
+                           
+
+                            if (optionExists) {
+                                categorySelect.value = oldSelectedCategory;
+                               
+                            } else {
+                                categorySelect.value = "";
+                               
+                            }
+                        }
+                    } else {
+                        console.warn('Edit Form Script: API returned unexpected data format or data.data is not an array:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Edit Form Script: Error fetching categories:', error);
+                });
+        } else {
+            
+        }
+    }
+
+    // Event listener for country select change
+    countrySelect.addEventListener('change', filterCategories);
+   
+
+    // Initial call to filter categories based on the current tour's country or oldInput's country.
+    // The country dropdown's value is already correctly set by EJS on page load.
+    if (countrySelect.value) {
+        
+        filterCategories();
+    } else {
+       
+    }
+});
+</script>
+
+<style>
+    /* Add/adjust these styles in your CSS file if they don't exist */
+    .dashboard-content {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    
+
+    .delete-form {
+        margin-left: 20px; /* Space between title and button */
+    }
+
+    .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .delete-btn i {
+        margin-right: 5px;
+    }
+
+    .delete-btn:hover {
+        background-color: #c82333;
+    }
+
+    .form-section {
+        background-color: #fff;
+        padding: 25px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    }
+
+    .form-control, .file-input, .editor-container, .file-upload-box, select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 16px;
+        color: #495057;
+    }
+
+    .form-control:focus, select:focus {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .column-inputs {
+        display: flex;
+        gap: 20px; /* Space between columns */
+    }
+    .column-inputs .form-group {
+        flex: 1; /* Each group takes equal width */
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -10px;
+        margin-left: -10px;
+    }
+
+    .form-row > .form-group {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .form-row .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    .form-row .col-md-2 {
+        flex: 0 0 16.666667%;
+        max-width: 16.666667%;
+    }
+    .form-row .col-md-10 {
+        flex: 0 0 83.333333%;
+        max-width: 83.333333%;
+    }
+
+    .editor-container {
+        min-height: 150px; /* Height for Quill editor */
+        border: 1px solid #ced4da; /* Match form control border */
+        border-radius: 4px;
+        background-color: #fff;
+    }
+
+    /* Quill toolbar styling for better integration */
+    .ql-toolbar.ql-snow {
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        border-bottom: 1px solid #ced4da;
+    }
+    .ql-container.ql-snow {
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+        border-top: none; /* No top border, it's part of toolbar */
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .file-upload-container {
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden; /* Hide default input */
+        margin-bottom: 15px;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .file-upload-box {
+        color: #007bff;
+    }
+
+    .file-upload-box i {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    .file-preview {
+        margin-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+        min-height: 50px; /* Ensure space for preview */
+    }
+
+    .file-preview img, .current-image-preview img {
+        max-width: 150px;
+        max-height: 150px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        object-fit: cover;
+    }
+
+    .image-preview-item {
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+
+    .current-image-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        background-color: #fcfcfc;
+    }
+
+    .current-image-preview label {
+        display: flex;
+        align-items: center;
+        font-weight: normal; /* Override bold label style */
+    }
+
+    .current-image-preview input[type="checkbox"] {
+        margin-right: 8px;
+        width: auto; /* Override 100% width */
+    }
+
+    .gallery-images-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        background-color: #fdfdfd;
+        justify-content: flex-start;
+    }
+
+    .gallery-image-item {
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .gallery-image-item img {
+        max-width: 120px;
+        max-height: 120px;
+        object-fit: cover;
+        margin-bottom: 5px;
+        border-radius: 3px;
+    }
+
+    .gallery-image-item label {
+        font-size: 13px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        font-weight: normal;
+    }
+    .gallery-image-item input[type="checkbox"] {
+        margin-right: 5px;
+        width: auto;
+    }
+
+    .no-images-msg {
+        color: #888;
+        font-style: italic;
+        width: 100%;
+        text-align: center;
+    }
+
+    .itinerary-item {
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 15px;
+        background-color: #fdfdfd;
+        position: relative;
+    }
+
+    .itinerary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+
+    .itinerary-header h4 {
+        margin: 0;
+        color: #333;
+    }
+
+    .remove-itinerary-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    .remove-itinerary-btn:hover {
+        color: #c82333;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-outline {
+        background-color: transparent;
+        color: #007bff;
+        border: 1px solid #007bff;
+    }
+
+    .btn-outline:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .form-actions {
+        padding-top: 20px;
+        text-align: right;
+    }
+
+    .form-text {
+        font-size: 0.875em;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .column-inputs, .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+        .form-row > .form-group,
+        .form-row .col-md-6,
+        .form-row .col-md-2,
+        .form-row .col-md-10 {
+            flex: 0 0 100%;
+            max-width: 100%;
+            padding-right: 0;
+            padding-left: 0;
+        }
+        .form-header-actions {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .delete-form {
+            margin-left: 0;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .delete-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>

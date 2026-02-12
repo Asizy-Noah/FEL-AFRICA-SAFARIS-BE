@@ -1,0 +1,194 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Add New Country</h2>
+        <div class="content-actions">
+            <a href="/countries/dashboard/countries" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Countries
+            </a>
+        </div>
+    </div>
+
+    <form id="addCountryForm" class="country-form" action="/countries/dashboard/countries/add" method="POST" enctype="multipart/form-data">
+        <div class="form-section"> 
+            <h3 class="section-title">Country Information</h3>
+            <div class="form-group">
+                <label for="countryName">Country Name</label>
+                <input type="text" id="countryName" name="name" class="form-control" required value="<%= typeof body !== 'undefined' ? body.name : '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="countryCode">Country Code (Strictly lowercase)</label>
+                <input type="text" id="countryCode" name="code" class="form-control" required value="<%= typeof body !== 'undefined' ? body.code : '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="countrySlug">Country Slug (Auto-generated if left empty)</label>
+                <input type="text" id="countrySlug" name="slug" class="form-control" value="<%= typeof body !== 'undefined' ? body.slug : '' %>">
+                
+            </div>
+
+            <div class="form-group">
+                <label for="countryOverview">Country Caption</label>
+                <textarea id="countryOverview" name="overview" class="form-control" rows="2" required><%= typeof body !== 'undefined' ? body.overview : '' %></textarea>
+                
+            </div>
+
+            <div class="form-group">
+                <label>Country Description</label>
+                <div id="countryDescriptionEditor" class="editor-container">
+                    <%= typeof body !== 'undefined' ? body.description : '' %>
+                </div>
+                <input type="hidden" name="description" id="countryDescription">
+            </div>
+
+            <div class="form-group">
+                <label for="countrySummary">Country Summary</label>
+                <textarea id="countrySummary" name="summary" class="form-control" rows="2"><%= typeof body !== 'undefined' ? body.summary : '' %></textarea>
+                
+            </div>
+
+            <div class="form-group">
+                <label for="coverImageInput">Upload Cover Image</label>
+                <div class="file-upload-container">
+                    <input type="file" id="coverImageInput" name="coverImage" class="file-input" accept="image/*" multiple>
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop images or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="imagePreview"></div>
+                </div>
+                <small class="form-text text-muted">Upload one or more images. The first image will be used as the cover unless specified.</small>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">SEO Information</h3>
+
+            <div class="form-group">
+                <label for="seoTitle">Meta Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= typeof body !== 'undefined' ? body.seoTitle : '' %>">
+                <small class="form-text text-muted">Recommended length: 50-60 characters (for browser tabs and search results).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="2" maxlength="150"><%= typeof body !== 'undefined' ? body.seoDescription : '' %></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
+                <small id="charCount">0 / 150</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= typeof body !== 'undefined' ? body.seoKeywords : '' %>">
+                <small class="form-text text-muted">Separate keywords with commas (e.g., "Uganda safaris, gorilla trekking Uganda").</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='/countries/dashboard/countries'">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Country</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Rich Text Editor Initialization (e.g., Quill.js) ---
+        // You need to include the Quill.js library (or similar) in your layout or before this script.
+        // Example with Quill.js:
+        const descriptionEditor = document.getElementById('countryDescriptionEditor');
+        if (descriptionEditor && typeof Quill !== 'undefined') {
+            const quill = new Quill(descriptionEditor, {
+                theme: 'snow', // Or 'bubble'
+                placeholder: 'Write the detailed description of the country here...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Update the hidden input field when editor content changes
+            const hiddenDescriptionInput = document.getElementById('countryDescription');
+            quill.on('text-change', () => {
+                hiddenDescriptionInput.value = quill.root.innerHTML;
+            });
+
+            // If there's pre-filled content (e.g., after an error), set it in the editor
+            if (hiddenDescriptionInput.value) {
+                quill.root.innerHTML = hiddenDescriptionInput.value;
+            }
+        } else if (descriptionEditor) {
+            console.warn("Quill.js library not found. Rich text editor will not initialize.");
+            // Fallback: If Quill.js isn't loaded, make the div a regular textarea
+            const fallbackTextarea = document.createElement('textarea');
+            fallbackTextarea.id = 'countryDescriptionFallback';
+            fallbackTextarea.name = 'description';
+            fallbackTextarea.className = 'form-control';
+            fallbackTextarea.rows = '5';
+            fallbackTextarea.placeholder = 'Write the detailed description of the country here...';
+            fallbackTextarea.value = hiddenDescriptionInput.value; // Keep existing content
+            descriptionEditor.parentNode.replaceChild(fallbackTextarea, descriptionEditor);
+            hiddenDescriptionInput.remove(); // Remove the hidden input as it's no longer needed
+        }
+
+        // --- Image Upload Preview ---
+        const coverImageInput = document.getElementById('coverImageInput');
+        const imagePreview = document.getElementById('imagePreview');
+
+        if (coverImageInput && imagePreview) {
+            coverImageInput.addEventListener('change', (event) => {
+                imagePreview.innerHTML = ''; // Clear previous previews
+
+                const files = event.target.files;
+                if (files.length === 0) {
+                    imagePreview.style.display = 'none';
+                    return;
+                }
+
+                imagePreview.style.display = 'flex'; // Display flex for image grid
+                Array.from(files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const imgContainer = document.createElement('div');
+                            imgContainer.className = 'preview-item';
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.alt = file.name;
+                            imgContainer.appendChild(img);
+                            imagePreview.appendChild(imgContainer);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            });
+        }
+
+        // --- Handle form submission (if not using rich editor) ---
+        // If rich text editor is NOT used (e.g., Quill.js fails to load),
+        // ensure the fallback textarea's content is submitted correctly.
+        const addCountryForm = document.getElementById('addCountryForm');
+        addCountryForm.addEventListener('submit', (event) => {
+            if (document.getElementById('countryDescriptionFallback')) {
+                // If fallback textarea is in use, ensure its name is 'description'
+                // and no hidden input with that name exists. This is handled above.
+            } else if (typeof Quill !== 'undefined' && descriptionEditor && !hiddenDescriptionInput.value) {
+                // If Quill is active but no content, make sure it's not empty
+                const editorContent = quill.root.innerHTML.trim();
+                if (editorContent === '<p><br></p>' || editorContent === '') { // Default empty content for Quill
+                    hiddenDescriptionInput.value = ''; // Ensure an empty string is sent
+                }
+            }
+        });
+
+        // --- Pre-fill form fields on error ---
+        // This is handled by `value="<%= typeof body !== 'undefined' ? body.name : '' %>"`
+        // and similar for other text inputs/textareas, and for the Quill editor.
+    });
+</script>

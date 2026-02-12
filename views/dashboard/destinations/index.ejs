@@ -1,0 +1,59 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Manage Destinations</h2>
+        <div class="content-actions">
+            <a href="/destinations/dashboard/destinations/add" class="add-btn">
+                <i class="fas fa-plus"></i>
+            </a>
+            <div class="search-container">
+                <form action="/destinations/dashboard/destinations" method="GET" class="search-form">
+                    <input type="text" name="search" class="search-input" placeholder="Search by name, description, keywords..." id="destinationSearchInput" value="<%= query && query.search ? query.search : '' %>">
+                    <button type="submit" style="display: none;"></button>
+                </form>
+            </div>
+            <button class="refresh-btn" onclick="location.href='/destinations/dashboard/destinations'">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <% if (messages && messages.success_msg && messages.success_msg.length > 0) { %>
+        <div class="alert alert-success"><%= messages.success_msg %></div>
+    <% } %>
+
+    <% if (destinations && destinations.length > 0) { %>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Country</th>
+                    <th>Categories</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% destinations.forEach(function(dest) { %>
+                    <tr>
+                        <td><%= dest.name %></td>
+                        <td><%= dest.country ? dest.country.name || dest.country : '—' %></td>
+                        <td>
+                            <% if (dest.categories && dest.categories.length > 0) { %>
+                                <%= dest.categories.map(c => (c.name ? c.name : c)).join(', ') %>
+                            <% } else { %>
+                                —
+                            <% } %>
+                        </td>
+                        <td>
+                            <a href="/destinations/dashboard/destinations/edit/<%= dest._id %>" class="btn btn-sm btn-outline">Edit</a>
+                            <form action="/destinations/dashboard/destinations/<%= dest._id %>?_method=DELETE" method="POST" style="display:inline-block;">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>No destinations found.</p>
+    <% } %>
+</div>

@@ -1,0 +1,156 @@
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Manage Agents</h2>
+        <div class="content-actions">
+            <a href="/users/dashboard/agents/add" class="add-btn" title="Add New Agent">
+                <i class="fas fa-plus"></i>
+            </a>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Type to search" id="agentSearchInput">
+            </div>
+            <button class="refresh-btn" id="refreshAgents" title="Refresh Agents">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success"><%= success_msg %></div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+        <div class="alert alert-danger"><%= error_msg %></div>
+    <% } %>
+
+    <div class="agents-grid">
+        <% if (agents && agents.length > 0) { %>
+            <% agents.forEach(function(agent){ %>
+                <div class="agent-card" data-country="<%= agent.country %>" data-status="<%= agent.status %>">
+                    <div class="agent-header">
+                        <h3 class="agent-name"><%= agent.name %></h3>
+                        <span class="agent-status <%= agent.status === 'active' ? 'active' : (agent.status === 'pending' ? 'pending' : 'inactive') %>">
+                            <% if (agent.status === 'active') { %>
+                                <i class="fas fa-check-circle text-success"></i> Active
+                            <% } else if (agent.status === 'pending') { %>
+                                <i class="fas fa-hourglass-half text-warning"></i> Pending
+                            <% } else { %>
+                                <i class="fas fa-times-circle text-danger"></i> Inactive
+                            <% } %>
+                        </span>
+                    </div>
+                    <div class="agent-details">
+                        <div class="agent-detail">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value"><%= agent.email %></span>
+                        </div>
+                        <% if (agent.phoneNumber) { %>
+                            <div class="agent-detail">
+                                <span class="detail-label">Tel. Number:</span>
+                                <span class="detail-value"><%= agent.phoneNumber %></span>
+                            </div>
+                        <% } %>
+                        <% if (agent.companyName) { %>
+                            <div class="agent-detail">
+                                <span class="detail-label">Co. Name:</span>
+                                <span class="detail-value"><%= agent.companyName %></span>
+                            </div>
+                        <% } %>
+                        <% if (agent.country) { %>
+                            <div class="agent-detail">
+                                <span class="detail-label">Country:</span>
+                                <span class="detail-value"><%= agent.country %></span>
+                            </div>
+                        <% } %>
+                        <div class="agent-detail">
+                            <span class="detail-label">Joined On:</span>
+                            <span class="detail-value"><%= new Date(agent.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                        </div>
+                        <% if (agent.companyWebsite) { %>
+                            <div class="agent-detail">
+                                <span class="detail-label">Company Website:</span>
+                                <a href="<%= agent.companyWebsite %>" class="website-link" target="_blank" rel="noopener noreferrer" title="Visit <%= agent.companyName || 'Company' %> Website">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="agent-actions">
+                        <a href="/users/dashboard/agents/edit/<%= agent._id %>" class="btn btn-sm btn-info edit-btn" title="Edit Agent">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+
+                        <form class="status-form d-inline-block ml-2" action="/users/dashboard/agents/<%= agent.status === 'active' ? 'deactivate' : 'activate' %>/<%= agent._id %>" method="POST" onsubmit="return confirm('Are you sure you want to <%= agent.status === 'active' ? 'deactivate' : 'activate' %> <%= agent.name %>?');">
+                            <button type="submit" class="action-btn status-toggle-btn" title="Toggle Status">
+                                <% if (agent.status === 'active') { %>
+                                    <i class="fas fa-toggle-on text-success"></i> Deactivate
+                                <% } else { %>
+                                    <i class="fas fa-toggle-off text-muted"></i> Activate
+                                <% } %>
+                            </button>
+                        </form>
+
+                        <form class="delete-form d-inline-block ml-2" action="/users/dashboard/agents/delete/<%= agent._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete <%= agent.name %>? This action cannot be undone.');">
+                            <button type="submit" class="btn btn-sm btn-danger delete-btn" title="Delete Agent">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <p class="text-center w-100">No agents found.</p>
+        <% } %>
+    </div>
+
+    <div class="pagination">
+        <button class="pagination-btn" disabled>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="pagination-btn active">1</button>
+        <button class="pagination-btn">2</button>
+        <button class="pagination-btn">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const agentCards = document.querySelectorAll('.agent-card');
+        const countryFilter = document.getElementById('agentCountryFilter');
+        const searchInput = document.getElementById('agentSearchInput');
+        const refreshButton = document.getElementById('refreshAgents');
+
+        function filterAgents() {
+            const selectedCountry = countryFilter.value;
+            const searchTerm = searchInput.value.toLowerCase();
+
+            agentCards.forEach(card => {
+                const cardCountry = card.dataset.country;
+                const agentName = card.querySelector('.agent-name').textContent.toLowerCase();
+                const agentEmail = card.querySelector('.agent-detail .detail-value').textContent.toLowerCase();
+                // Safely get company name, handling cases where it might be missing
+                const agentCompanyNameElement = card.querySelector('.agent-detail:nth-child(3) .detail-value');
+                const agentCompanyName = agentCompanyNameElement ? agentCompanyNameElement.textContent.toLowerCase() : '';
+
+                const countryMatch = selectedCountry === 'all' || cardCountry === selectedCountry;
+                const searchMatch = agentName.includes(searchTerm) || agentEmail.includes(searchTerm) || agentCompanyName.includes(searchTerm);
+
+                if (countryMatch && searchMatch) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        countryFilter.addEventListener('change', filterAgents);
+        searchInput.addEventListener('keyup', filterAgents);
+        
+        refreshButton.addEventListener('click', function() {
+            window.location.reload(); // Simple refresh for now
+        });
+
+        // Initial filter on page load
+        filterAgents();
+    });
+</script>
