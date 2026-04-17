@@ -1,0 +1,778 @@
+<!-- HERO SECTION WITH SLICK CAROUSEL -->
+    <section id="home" class="hero-carousel-wrapper">
+        <div class="hero-carousel">
+            <% if (locals.heroSlides && heroSlides.length > 0) { %>
+                <% heroSlides.forEach(slide => { %>
+                    <div class="hero-slide">
+                        <div class="container">
+                            <div class="hero-content">
+                                <h1 class="hero-title">
+                                    <span><%= slide.title %></span> 
+                                    <span class="highlight-gold"><%= slide.titleEnd %></span>
+                                </h1>
+                                <% if (slide.caption) { %>
+                                    <p class="hero-subtitle">
+                                        <%= slide.caption %>
+                                    </p>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="hero-overlay"></div>
+                        <img src="<%= slide.photo %>" alt="<%= slide.title %>" class="hero-bg">
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="hero-slide">
+                    <div class="container">
+                        <div class="hero-content">
+                            <h1 class="hero-title">
+                                <span>Experience the</span> <span class="highlight-gold">Wild Heart of Africa</span>
+                            </h1>
+                            <p class="hero-subtitle">
+                                Embark on unforgettable safaris through Africa's breathtaking landscapes and wildlife.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="hero-overlay"></div>
+                    <img src="/images/nat-4.jpg" alt="African Elephant Safari" class="hero-bg">
+                </div>
+            <% } %>
+        </div>
+
+        <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY CHOOSE US SECTION -->
+    <section id="about" class="why-choose-us py-5">
+        <div class="container">
+
+            <div class="row about-components">
+                <div class="col-md-6">
+                    <div class="about-info">
+                        <h3 class="heading-tertiary">Feel Africa Safaris</h3>
+                        <p class="paragraph">
+                            Cupcake ipsum dolor sit amet. Icing topping liquorice caramels bear claw. Gummi bears soufflé I love icing cotton candy tootsie roll. Brownie sweet roll soufflé biscuit. Lollipop I love cake cookie toffee tiramisu apple pie bonbon lollipop.  Cheesecake lollipop biscuit. Cookie tootsie roll donut cupcake pie biscuit donut. 
+                        </p>
+                    </div>
+          
+                    <div class="row g-4 feature-info">
+                        <!-- Card 1 -->
+                        <div class="col-md-4 col-sm-4">
+                            <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-binoculars"></i>
+                                </div>
+                                <h3 data-i18n="features.guides.title">Expert Guides</h3>
+                                <p data-i18n="features.guides.desc">Our knowledgeable local guides ensure authentic and safe safari adventures.</p>
+                            </div>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div class="col-md-4 col-sm-4">
+                            <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-compass"></i>
+                                </div>
+                                <h3 data-i18n="features.adventures.title">Tailored Adventures</h3>
+                                <p data-i18n="features.adventures.desc">Customized safari itineraries to suit your dreams and interests.</p>
+                            </div>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div class="col-md-4 col-sm-4">
+                            <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <h3 data-i18n="features.luxury.title">Luxury & Comfort</h3>
+                                <p data-i18n="features.luxury.desc">Experience top-notch accommodations and exceptional service.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-info-smaller">
+                        <!-- Card 1 -->
+                        <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-binoculars"></i>
+                                </div>
+                                <h3 data-i18n="features.guides.title">Expert Guides</h3>
+                                <p data-i18n="features.guides.desc">Our knowledgeable local guides ensure authentic and safe safari adventures.</p>
+                            </div>
+
+                        <!-- Card 2 -->
+                        <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-compass"></i>
+                                </div>
+                                <h3 data-i18n="features.adventures.title">Tailored Adventures</h3>
+                                <p data-i18n="features.adventures.desc">Customized safari itineraries to suit your dreams and interests.</p>
+                            </div>
+
+                        <!-- Card 3 -->
+                        <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <h3 data-i18n="features.luxury.title">Luxury & Comfort</h3>
+                                <p data-i18n="features.luxury.desc">Experience top-notch accommodations and exceptional service.</p>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="composition">
+                        <img src="/img/nat-1-large.jpg" alt="Steam in the woods" class="composition__photo composition__photo--p1">
+                        <img src="/img/nat-2-large.jpg" alt="Cyclist on a trail" class="composition__photo composition__photo--p2">
+                        <img src="/img/nat-3-large.jpg" alt="Hiker on a mountain" class="composition__photo composition__photo--p3">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-4 feature-info-small">
+                        <!-- Card 1 -->
+                        <div class="col-md-4">
+                            <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-binoculars"></i>
+                                </div>
+                                <h3 data-i18n="features.guides.title">Expert Guides</h3>
+                                <p data-i18n="features.guides.desc">Our knowledgeable local guides ensure authentic and safe safari adventures.</p>
+                            </div>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div class="col-md-4">
+                            <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-compass"></i>
+                                </div>
+                                <h3 data-i18n="features.adventures.title">Tailored Adventures</h3>
+                                <p data-i18n="features.adventures.desc">Customized safari itineraries to suit your dreams and interests.</p>
+                            </div>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div class="col-md-4">
+                            <div class="feature-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <h3 data-i18n="features.luxury.title">Luxury & Comfort</h3>
+                                <p data-i18n="features.luxury.desc">Experience top-notch accommodations and exceptional service.</p>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+    </section>
+
+    <!-- SAFARI PACKAGES SECTION -->
+    <section id="tours" class="safari-packages py-5">
+        <div class="container">
+            <h2 class="section-title text-center mb-3">Explore Our Popular Safari Packages</h2>
+            
+            <div class="g-4 packages-carousel">
+                <% if (locals.popularTours && popularTours.length > 0) { %>
+                    <% popularTours.forEach(tour => { %>
+                        <div class="packages">
+                            <div class="package-card">
+                                <img src="<%= tour.coverImage %>" alt="<%= tour.title %>">
+                                <div class="package-info">
+                                    <h3><%= tour.title %></h3>
+                                    <div class="d-flex justify-content-between mb-2 mt-3">
+                                        <small class="m-0"><i class="fa fa-calendar-alt me-1"></i><%= tour.days %> days</small>
+                                        <small class="m-0"><i class="fa fa-user me-1"></i><%= tour.groupSize || '2' %> Person</small>
+                                    </div>
+                                    <p class="price">$<%= tour.price.toLocaleString() %></p>
+                                    <p><% 
+                                    const cleanOverview = tour.overview.replace(/<[^>]*>?/gm, '');
+                                    const truncatedText = cleanOverview.length > 120 ? cleanOverview.substring(0, 120) + '...' : cleanOverview;
+                                    %>
+                                    <%= truncatedText %></p>
+                                    <a href="/tours/<%= tour.slug %>">
+                                        <button class="filter-tab">View Package</button>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <p class="text-center">No packages available at the moment.</p>
+                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <!-- Registration Start -->
+    <div class="container-fluid bg-registration py-5 registration">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-7 mb-5 mb-lg-0">
+                    <div class="mb-4">
+                        <h6 class="text-green" style="letter-spacing: 2px;">Let us customize a safari for you</h6>
+                        <h1 class="text-white">Your <span class="text-green text-uppercase">Bespoke</span> <span class="text-uppercase">Safari</span></h1>
+                    </div>
+                    <p class="text-white">
+                        Every traveler is unique, and we believe your African adventure should be too. 
+                        Beyond our signature tours, we specialize in crafting tailored itineraries that 
+                        align perfectly with your interests, pace, and budget. Whether it's a romantic 
+                        honeymoon, a family milestone, or a solo photography expedition, your dream 
+                        safari starts with a blank canvas.
+                    </p>
+                    <ul class="list-inline text-white m-0">
+                        <li class="py-2"><i class="fa fa-check text-green mr-3"></i>Personalized itineraries designed by local safari experts</li>
+                        <li class="py-2"><i class="fa fa-check text-green mr-3"></i>Hand-picked luxury lodges and boutique wilderness camps</li>
+                        <li class="py-2"><i class="fa fa-check text-green mr-3"></i>Exclusive 4x4 vehicles with dedicated private guides</li>
+                    </ul> 
+                    <div class="mt-4">
+                        <a href="/enquiry#quote"><button class="btn-enquiry">Get your Custom Safari Now</button></a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="border-0">
+                        <div class="card-header text-center">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Registration End -->
+
+    <!-- DESTINATIONS SECTION -->
+    <section id="destinations" class="destinations py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-4">Popular Destinations</h2>
+
+        <div class="destinations-container">
+            <div class="sort-destinations">
+                <div class="sort-countries">
+                    <div class="sort-country-item filter-tab active" data-filter="all">All destinations</div>
+                    
+                    <% if (locals.countries && countries.length > 0) { %>
+                        <% countries.forEach(country => { %>
+                            <div class="sort-country-item filter-tab" data-filter="<%= country.slug %>">
+                                <span class="fi fi-<%= country.code ? country.code.toLowerCase() : '' %>"></span>
+                                <%= country.name %>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+            </div>
+        
+            <div class="row g-4 destinations-items destination-grid">
+                <% if (locals.destinations && destinations.length > 0) { %>
+                    <% destinations.forEach(dest => { %>
+                        <% 
+                        // Get the slug safely. Handle cases where country might be a string ID or an object
+                        const countrySlug = (dest.country && typeof dest.country === 'object') 
+                                            ? dest.country.slug 
+                                            : 'none'; 
+                        %>
+                        <div class="col-md-6 destination-card-container" data-type="<%= countrySlug %>">
+                            <div class="destination-card">
+                                <img src="<%= dest.coverImage %>" alt="<%= dest.name %>" class="destination-img">
+                                <div class="destination-content">
+                                    <h3><%= dest.name %></h3> 
+                                    <p>
+                                        <% 
+                                        const cleanOverview = dest.description.replace(/<[^>]*>?/gm, '');
+                                        const truncatedText = cleanOverview.length > 100 ? cleanOverview.substring(0, 100) + '...' : cleanOverview;
+                                        %>
+                                        <%= truncatedText %>
+                                    </p>
+                                </div>
+                                <div class="destination-overlay"></div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+                </div>
+
+                <div class="pagination" id="destination-pagination"></div>
+            </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section id="testimonials" class="testimonials py-5" style="background-color: var(--color-background)">
+        <div class="container">
+            <h2 class="section-title text-center mb-4">What Our Clients Say</h2>
+            
+            <div class="testimonials-carousel owl-carousel">
+                <% if (reviews && reviews.length > 0) { %>
+                    <% reviews.forEach(review => { %>
+                        <div class="review-item bg-white shadow-sm  p-4 h-100">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <div class="logo-badge bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; min-width: 30px;">
+                                        <% 
+                                            // Map source string to local image assets
+                                            let sourceImg = "img/google-logo.jpeg"; 
+                                            if (review.source === 'safari_bookings') sourceImg = "img/safari-booking.png";
+                                            if (review.source === 'trip_advisor') sourceImg = "img/trip-advisor-logo.png";
+                                        %>
+                                        <img src="<%= sourceImg %>" alt="<%= review.source %>" style="width: 20px; height: 20px; object-fit: contain;">
+                                    </div>
+                                    <div class="review-rating">
+                                        <span class="stars">
+                                            <% for(let i = 1; i <= 5; i++) { %>
+                                                <% if (i <= review.rating) { %>
+                                                    <i class="fa fa-star text-warning"></i>
+                                                <% } else { %>
+                                                    <i class="fa fa-star text-muted" style="opacity: 0.3;"></i>
+                                                <% } %>
+                                            <% } %>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <h5 class="font-weight-bold mb-3">
+                                    <%= review.title %>
+                                </h5>
+                                
+                                <p class="text-muted mb-3" style="font-size: 14px;">
+                                    <i class="fa fa-user mr-2"></i><%= review.clientName %>
+                                    <% if (review.country) { %>, <%= review.country %><% } %>
+                                    <span class="mx-2">|</span>
+                                    <i class="fa fa-calendar mr-2"></i>
+                                    <%= new Date(review.reviewDate || review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %>
+                                </p>
+                                
+                                <p class="mb-4" style="line-height: 1.7; min-height: 80px;">
+                                    <% 
+                                        const maxLength = 160;
+                                        let text = review.comment || '';
+                                        if (text.length > maxLength) {
+                                            text = text.substring(0, maxLength) + '...';
+                                        }
+                                    %>
+                                    <%= text %>
+                                </p>
+                                
+                                <a href="<%= review.externalLink %>" target="_blank" class="font-weight-bold">
+                                    Read More
+                                    <i class="fa fa-external-link-alt ml-1" style="font-size: 12px;"></i>
+                                </a>
+                            
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="text-center w-100 py-5">
+                        <p class="text-muted">Experience the magic with us. Our client reviews will appear here soon!</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="write-review text-center">
+                        <span class="write-review-heading">Write a review about Feel Africa Safaris on:</span>
+                        <div class="review-sites">
+                            <a href="#" class="review-sites-item google-review">
+                                <div class="logo-badge bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <img class="" src="/img/google-logo.jpeg" alt="Review Source">
+                                </div>
+                                <span class="google-review-label">Google Maps</span>
+                            </a>
+                            <a href="#" class="review-sites-item safari-booking-review">
+                                <div class="logo-badge bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <img class="" src="/img/safari-booking.png" alt="Review Source">
+                                </div>
+                                <span class="safari-booking-review-label">Safari Booking</span>
+                            </a>
+                            <a href="#" class="review-sites-item trip-advisor-review">
+                                <div class="logo-badge bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <img class="" src="/img/trip-advisor-logo.png" alt="Review Source">
+                                </div>
+                                <span class="trip-advisor-review-label">Trip Advisor</span>
+                            </a>
+                        </div>
+                    </div>
+        </div>
+    </section>
+
+    <!-- Blog Start - New Design -->
+        <div class="container-xxl py-5">
+            <div class="container">
+                <h2 class="section-title text-center mb-4">Our Safari Blogs</h2>
+                
+                <section class="trending-now-section">
+                    <div class="blog-carousel-wrapper">
+                        <button class="blog-carousel-nav-btn carousel-prev" data-carousel="trending-carousel">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+
+                        <div class="blog-carousel-container trending-carousel">
+                            <div class="carousel-track">
+                                <% if (trendingBlogs && trendingBlogs.length > 0) { %>
+                                    <% trendingBlogs.forEach(blog => { %>
+                                        <div class="blog-carousel-slide trending-card">
+                                            <div class="trending-link">
+                                                <div class="trending-image">
+                                                    <img src="<%= blog.coverImage %>" alt="<%= blog.title %>">
+                                                </div>
+                                                <div class="trending-content">
+                                                    <h3><%= blog.title %></h3>
+                                                    <p>
+                                                        <% 
+                                                        // 1. Get the content
+                                                        const introSection = blog.sections ? blog.sections.find(s => s.type === 'intro') : null;
+                                                        let rawContent = (introSection && introSection.body) ? introSection.body : (blog.excerpt || '');
+
+                                                        // 2. Strip HTML AND Decode Entities (to get actual text length)
+                                                        // We use a simple regex for tags and trim whitespace
+                                                        let cleanText = rawContent.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
+
+                                                        // 3. Truncate
+                                                        let truncatedText = cleanText;
+                                                        if (cleanText.length > 100) {
+                                                            truncatedText = cleanText.substring(0, 100).trim() + '...';
+                                                        }
+                                                        %>
+                                                        <%= truncatedText || 'Explore more about this adventure...' %>
+                                                    </p>
+                                                    <div class="trending-meta">
+                                                        <div class="blog-footer">
+                                                            <a href="/blogs/<%= blog.slug %>" class="view-btn">Read More</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <p class="text-center w-100">No trending blogs found.</p>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <button class="blog-carousel-nav-btn carousel-next" data-carousel="trending-carousel">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <!-- blog List End -->
+
+        <script>
+class BlogCarousel {
+    constructor() {
+        this.carousels = new Map();
+        this.init();
+    }
+
+    init() {
+        const containers = document.querySelectorAll('.blog-carousel-container');
+        containers.forEach(container => this.setupCarousel(container));
+        this.setupNavButtons();
+    }
+
+    setupCarousel(container) {
+        const track = container.querySelector('.carousel-track');
+        const slides = container.querySelectorAll('.blog-carousel-slide');
+        if (!track || slides.length === 0) return;
+
+        const carouselId = Math.random().toString(36).substr(2, 9);
+        this.carousels.set(carouselId, {
+            container, track, slides,
+            currentIndex: 0,
+            isAnimating: false
+        });
+
+        const update = () => this.updateSlideDimensions(carouselId);
+        window.addEventListener('resize', update);
+        setTimeout(update, 100);
+    }
+
+    updateSlideDimensions(id) {
+        const c = this.carousels.get(id);
+        if (!c) return;
+        const style = window.getComputedStyle(c.track);
+        c.gap = parseFloat(style.gap) || 24;
+        c.slideWidth = c.slides[0].offsetWidth;
+        this.checkNavButtons(id);
+    }
+
+    checkNavButtons(id) {
+        const c = this.carousels.get(id);
+        const containerClass = Array.from(c.container.classList).find(cls => cls.endsWith('-carousel'));
+        const prevBtn = document.querySelector(`.carousel-prev[data-carousel="${containerClass}"]`);
+        const nextBtn = document.querySelector(`.carousel-next[data-carousel="${containerClass}"]`);
+
+        if (!prevBtn || !nextBtn) return;
+
+        const totalWidth = c.track.scrollWidth;
+        const currentOffset = Math.abs(c.currentIndex * (c.slideWidth + c.gap));
+        
+        prevBtn.style.display = c.currentIndex === 0 ? 'none' : 'flex';
+        nextBtn.style.display = (totalWidth - (currentOffset + c.container.offsetWidth)) <= 1 ? 'none' : 'flex';
+    }
+
+    setupNavButtons() {
+        document.querySelectorAll('.blog-carousel-nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const name = e.currentTarget.dataset.carousel;
+                const dir = e.currentTarget.classList.contains('carousel-next') ? 1 : -1;
+                this.carousels.forEach((c, id) => {
+                    if (c.container.classList.contains(name)) this.slideCarousel(id, dir);
+                });
+            });
+        });
+    }
+
+    slideCarousel(id, dir) {
+        const c = this.carousels.get(id);
+        if (!c || c.isAnimating) return;
+
+        const step = c.slideWidth + c.gap;
+        const maxScroll = c.track.scrollWidth - c.container.offsetWidth;
+        const maxIndex = Math.ceil(maxScroll / step);
+
+        let newIndex = Math.max(0, Math.min(c.currentIndex + dir, maxIndex));
+        if (newIndex === c.currentIndex) return;
+
+        c.isAnimating = true;
+        c.currentIndex = newIndex;
+        let offset = Math.max(-(c.currentIndex * step), -maxScroll);
+
+        c.track.style.transform = `translateX(${offset}px)`;
+        setTimeout(() => {
+            c.isAnimating = false;
+            this.checkNavButtons(id);
+        }, 600);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => new BlogCarousel());
+</script>
+
+        <style>
+    /* ================================
+   EXPLORE BY COUNTRY SECTION
+   ================================ */
+.blog-carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.blog-carousel-nav-btn {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  opacity: 0.5;
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow);
+}
+
+.blog-carousel-nav-btn.carousel-prev {
+  left: 0;
+  z-index: 20;
+}
+
+.blog-carousel-nav-btn.carousel-next {
+  right: 0;
+}
+
+.blog-carousel-nav-btn:hover {
+  background: var(--color-accent);
+  transform: scale(1.08);
+  box-shadow: var(--shadow-hover);
+}
+
+.blog-carousel-nav-btn svg {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;
+}
+
+.blog-carousel-nav-btn:active svg {
+  transform: scale(1.15);
+}
+
+.blog-carousel-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: block;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  width: max-content;
+}
+
+.blog-carousel-slide {
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+/* Country Cards */
+.countries-carousel {
+    margin: auto 0;
+}
+
+.country-card {
+  flex-shrink: 0;
+  width: 200px;
+  min-width: 200px;
+  background: var(--color-white);
+  border: 2px solid var(--color-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.country-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  padding: 1.5rem;
+  color: var(--color-foreground);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.country-card:hover {
+  border-color: var(--color-secondary);
+  background: #faf8f3;
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.country-link:hover {
+  color: var(--color-secondary);
+}
+
+/* ================================
+   TRENDING NOW SECTION
+   ================================ */
+.trending-now-section {
+    padding: 1rem 0;
+}
+
+.trending-card {
+  flex-shrink: 0;
+  width: 350px;
+  min-width: 350px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trending-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+.trending-image {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: var(--color-light-gray);
+}
+
+.trending-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trending-card:hover .trending-image img {
+  transform: scale(1.08);
+}
+
+.trending-content {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.trending-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-secondary);
+}
+
+.trending-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.trending-card:hover .trending-content h3 {
+  color: var(--color-accent);
+}
+
+.trending-content p {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+.trending-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.read-time {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.category {
+  display: inline-block;
+  background: var(--color-primary);
+  color: var(--color-white);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.trending-card:hover .category {
+  background: var(--color-secondary);
+}
+        </style>

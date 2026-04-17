@@ -1,0 +1,206 @@
+<section id="home" class="generic-hero-section">
+    <div class="generic-hero-content">
+        <h1 class="generic-hero-title">
+            <%= blog.title %>
+        </h1>
+    </div>
+    <div class="generic-hero-overlay"></div>
+    <img src="<%= blog.coverImage %>" alt="<%= blog.title %>" class="hero-bg">
+    <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+</section>
+
+<section class="blog-post-container">
+    <div class="container">
+        <div class="blog-post-wrapper">
+            <article class="blog-post-content">
+                <div class="breadcrumb-nav">
+                    <a href="/">Home</a>
+                    <span class="separator">/</span>
+                    <a href="/blogs">Blogs</a>
+                    <span class="separator">/</span>
+                    <span class="current"><%= blog.title %></span>
+                </div>
+
+                <header class="post-header">
+                    <h1 class="post-title"><%= blog.title %></h1>
+                    
+                    <div class="post-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span><%= new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-user"></i>
+                            <span>By <%= blog.author?.firstName || 'Feel Africa Admin' %></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <% 
+                                const words = blog.sections.map(s => s.body || '').join(' ').split(' ').length;
+                                const readTime = Math.ceil(words / 200);
+                            %>
+                            <span><%= readTime %> min read</span>
+                        </div>
+                        <% if(blog.categories && blog.categories.length > 0) { %>
+                            <div class="meta-item">
+                                <i class="fas fa-tag"></i>
+                                <span><%= blog.categories.map(c => c.name).join(', ') %></span>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <img src="<%= blog.coverImage %>" alt="<%= blog.title %>" class="post-featured-image">
+                </header>
+
+                <div class="post-body">
+                    <% blog.sections.forEach(section => { %>
+
+                        <% if (['intro', 'paragraph', 'conclusion'].includes(section.type)) { %>
+                            <div class="content-section <%= section.type === 'conclusion' ? 'conclusion-section' : '' %>">
+                                <% if (section.title) { %> <h2><%= section.title %></h2> <% } %>
+                                <div class="section-body">
+                                    <%- section.body %>
+                                </div>
+
+                                <% if (section.resolvedAttachments && section.resolvedAttachments.length > 0) { %>
+                                    <div class="paragraph-attachments">
+                                        <% section.resolvedAttachments.forEach(item => { %>
+                                            <div class="attached-card <%= item.type %>-card">
+                                                <div class="card-image">
+                                                    <img src="<%= item.coverImage || item.image %>" alt="<%= item.title || item.name %>">
+                                                    <% if(item.type !== 'tour') { %> <span class="card-badge"><%= item.type %></span> <% } %>
+                                                </div>
+                                                <div class="card-content">
+                                                    <h4><a href="/<%= item.type %>s/<%= item.slug %>"><%= item.title || item.name %></a></h4>
+                                                    <% if(item.type === 'tour') { %> <p class="card-price">$<%= item.price %></p> <% } %>
+                                                </div>
+                                            </div>
+                                        <% }) %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } %>
+
+                        <% if (section.type === 'tour' || section.type === 'page') { 
+                            // Logic to find the object regardless of whether it's in tourId, pageId, or referenceId
+                            const item = section.tourId || section.pageId || section.referenceId;
+                            
+                            if (item && typeof item === 'object') { 
+                                const link = section.type === 'tour' ? `/tours/${item.slug}` : `/pages/${item.slug}`;
+                        %>
+                            <a href="<%= link %>" class="embedded-tour-card">
+                                <div class="tour-list-image">
+                                    <img src="<%= item.coverImage || item.image || 'images/default.jpg' %>" alt="Featured <%= section.type %>">
+                                </div>
+                                <div class="tour-list-info">
+                                    <h4><%= item.title || item.name %></h4>
+                                    <% if (section.type === 'tour') { %>
+                                        <span class="tour-price">From $<%= item.price %></span>
+                                    <% } else { %>
+                                        <span class="tour-price">View Information</span>
+                                    <% } %>
+                                </div>
+                            </a>
+                        <% } } %>
+
+                    <% }) %>
+                </div>
+
+                <footer class="post-footer">
+                    <div class="post-tags">
+                        <% if (blog.categories && blog.categories.length > 0) { %>
+                            <% blog.categories.forEach(function(cat) { %>
+                                <a href="/blogs/category/<%= cat.slug || cat._id %>" class="tag">
+                                    <%= cat.name %>
+                                </a>
+                            <% }); %>
+                        <% } else { %>
+                            <span class="tag">Uncategorized</span>
+                        <% } %>
+                    </div>
+
+                    <div class="post-share">
+                        <h4>Share This Post</h4>
+                        <div class="share-buttons">
+                            <% const shareUrl = encodeURIComponent(`https://feelafricasafaris.com/blogs/${blog.slug}`); %>
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=<%= shareUrl %>" target="_blank" class="share-btn facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="https://twitter.com/intent/tweet?url=<%= shareUrl %>&text=<%= encodeURIComponent(blog.title) %>" target="_blank" class="share-btn twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(blog.title + ' ' + shareUrl) %>" target="_blank" class="share-btn whatsapp"><i class="fab fa-whatsapp"></i></a>
+                        </div>
+                    </div>
+                </footer>
+
+                <div class="post-navigation">
+                    <% if (prevBlog) { %>
+                        <a href="/blogs/<%= prevBlog.slug %>" class="nav-previous">
+                            <span class="nav-label">Previous</span>
+                            <span class="nav-title"><%= prevBlog.title %></span>
+                        </a>
+                    <% } %>
+                    <% if (nextBlog) { %>
+                        <a href="/blogs/<%= nextBlog.slug %>" class="nav-next">
+                            <span class="nav-label">Next</span>
+                            <span class="nav-title"><%= nextBlog.title %></span>
+                        </a>
+                    <% } %>
+                </div>
+            </article>
+
+            <aside class="blog-sidebar">
+                <div class="sidebar-widget search-widget">
+                    <h3 class="widget-title">Search Posts</h3>
+                    <form class="search-form" action="/blogs" method="GET">
+                        <input type="text" name="search" class="search-input" placeholder="Enter keywords...">
+                        <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+                    </form>
+                </div>
+
+                <div class="sidebar-widget related-posts-widget">
+                    <h3 class="widget-title">Related Posts</h3>
+                    <div class="related-posts-list">
+                        <% relatedBlogs.forEach(rel => { %>
+                            <div class="related-post-item">
+                                <div class="related-post-image">
+                                    <img src="<%= rel.coverImage %>" alt="Post">
+                                </div>
+                                <div class="related-post-info">
+                                    <h4><a href="/blogs/<%= rel.slug %>"><%= rel.title %></a></h4>
+                                    <span class="post-date"><%= new Date(rel.createdAt).toDateString() %></span>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <div class="sidebar-widget popular-packages-widget">
+                    <h3 class="widget-title">Popular Packages</h3>
+                    <div class="popular-packages-list">
+                        <% popularTours.forEach(tour => { %>
+                            <div class="package-item">
+                                <div class="package-image">
+                                    <img src="<%= tour.coverImage %>" alt="<%= tour.title %>">
+                                    <span class="package-price">$<%= tour.price %></span>
+                                </div>
+                                <h4><a href="/tours/<%= tour.slug %>"><%= tour.title %></a></h4>
+                                <div class="package-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>

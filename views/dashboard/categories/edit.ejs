@@ -1,85 +1,117 @@
 <div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Edit Category: <%= category.name %></h2>
+        <div class="content-actions">
+            <a href="/categories/dashboard" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Categories
+            </a>
+            <button type="button" class="btn btn-danger" data-category-id="<%= category._id %>" data-category-name="<%= category.name %>" id="deleteCategoryBtn">
+                <i class="fas fa-trash"></i> Delete Category
+            </button>
+        </div>
+    </div>
 
-    
-
-    <form class="category-form" id="editCategoryForm" action="/categories/dashboard/edit/<%= category._id %>?_method=PATCH" method="POST" enctype="multipart/form-data">
+    <form id="editCategoryForm" class="category-form" action="/categories/dashboard/edit/<%= category._id %>?_method=PATCH" method="POST" enctype="multipart/form-data">
         <div class="form-section">
+            <h3 class="section-title">Category Information</h3>
+            
             <div class="form-group">
-                <label for="categoryName">Name</label>
+                <label for="categoryName">Category Name</label>
                 <input type="text" id="categoryName" name="name" class="form-control" value="<%= category.name %>" required>
             </div>
 
             <div class="form-group">
-                <label for="categorySlug">Slug</label>
-                <input type="text" id="categorySlug" name="slug" class="form-control" value="<%= category.slug %>" readonly>
-                <small class="form-text text-muted">Automatically generated from name, but can be manually edited. Best practice: keep it URL-friendly.</small>
+                <label for="categorySlug">Category Slug (Auto generated)</label>
+                <input type="text" id="categorySlug" name="slug" class="form-control" value="<%= category.slug %>">
             </div>
-            
+
             <div class="form-group">
-                <label for="categoryDescription">Description</label>
-                <div id="categoryDescriptionEditor" class="editor-container">
-                    <%- typeof oldInput !== 'undefined' ? oldInput.description : (typeof category !== 'undefined' ? category.description : '') %>
-                </div>
-                <input type="hidden" name="description" id="categoryDescription" 
-                       value="<%= typeof oldInput !== 'undefined' && oldInput.description ? oldInput.description : (typeof category !== 'undefined' && category.description ? category.description : '') %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="categoryCountry">Country</label>
-                <select id="categoryCountry" name="country" class="form-control">
-                    <option value="">All Countries</option>
-                    <% countries.forEach(country => { %>
-                        <option value="<%= country._id %>" <%= category.country && category.country._id.toString() === country._id.toString() ? 'selected' : '' %>>
-                            <%= country.name %>
-                        </option>
-                    <% }); %>
-                </select>
-                <small class="form-text text-muted">Select a country or leave as "All Countries" if this category applies to all</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="coverImage">Upload Cover Image</label>
-                <div class="file-upload-container">
-                    <input type="file" id="coverImage" name="image" class="file-input" accept="image/*">
-                    <div class="file-upload-box">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Drag & drop image or click to browse</span>
+                <label for="categoryCountry">Associated Countries</label>
+                <div class="multi-select-container">
+                    <select id="categoryCountry" name="countries" class="form-control hidden-select" multiple>
+                        <% countries.forEach(country => { %>
+                            <option value="<%= country._id %>"
+                                <% if (typeof oldInput !== 'undefined' && oldInput.countries) { %>
+                                    <%= oldInput.countries.includes(country._id.toString()) ? 'selected' : '' %>
+                                <% } else if (typeof category !== 'undefined' && category.countries) { %>
+                                    <%= category.countries.some(c => (c._id || c).toString() === country._id.toString()) ? 'selected' : '' %>
+                                <% } %>>
+                                <%= country.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+
+                    <div class="selected-tags-container" id="tagsContainer">
+                        <input type="text" id="countrySearch" placeholder="Type to search countries..." class="tag-input-field">
                     </div>
-                    <div class="file-preview" id="imagePreview">
+                    
+                    <div class="dropdown-list" id="countryDropdown">
+                        <% countries.forEach(country => { %>
+                            <div class="dropdown-item" data-id="<%= country._id %>"><%= country.name %></div>
+                        <% }); %>
+                    </div>
+                </div>
+                <small class="form-text text-muted">You can select multiple countries (e.g., Uganda and Rwanda).</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Category Description</label>
+                <div id="categoryDescriptionEditor" class="editor-container"></div>
+                <input type="hidden" name="description" id="categoryDescription" value="<%= category.description %>">
+            </div>
+
+            <div class="form-group">
+                <label>Current Cover Image</label>
+                <div class="row">
+                    <div class="col-md-6">
                         <% if (category.image) { %>
-                            <img src="<%= category.image %>" alt="Current Cover Image" style="display: block;">
+                            <div class="current-cover-image">
+                                <img src="<%= category.image %>" alt="Current Image" style="max-width: 200px; height: auto; border: 1px solid #ddd; padding: 5px;">
+                                <input type="hidden" name="image" value="keep"> 
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="replaceCoverImage" value="new">
+                                    <label class="form-check-label" for="replaceCoverImage">
+                                        Replace Current Category Image
+                                    </label>
+                                </div>
+                            </div>
                         <% } else { %>
-                            <img src="" alt="Image Preview" style="display: none;">
+                            <p class="text-muted">No image currently set.</p>
                         <% } %>
                     </div>
+                
+                    <div class="col-md-6">
+                        <div class="file-upload-container mt-3" id="newCoverImageUpload" style="<%= category.image ? 'display: none;' : '' %>">
+                        <label for="newCoverImageInput" class="d-block">Upload New Image</label>
+                        <input type="file" id="newCoverImageInput" name="image" class="file-input" accept="image/*">
+                        <div class="file-upload-box">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Drag & drop image or click to browse</span>
+                        </div>
+                        <div class="file-preview" id="newCoverImagePreview"></div>
+                    </div>
+                    </div>
+                    </div>
                 </div>
-                <% if (category.image) { %>
-                    <small class="form-text text-muted">Current image: <a href="<%= category.image %>" target="_blank">View</a></small>
-                <% } else { %>
-                    <small class="form-text text-muted">No current image.</small>
-                <% } %>
             </div>
         </div>
-        
+
         <div class="form-section">
             <h3 class="section-title">SEO Information</h3>
             
             <div class="form-group">
-                <label for="seoTitle">SEO Title</label>
+                <label for="seoTitle">Meta Title (SEO)</label>
                 <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= category.seoTitle || '' %>">
-                <small class="form-text text-muted">Recommended length: 50-60 characters</small>
             </div>
             
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
-                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= category.seoDescription || '' %></textarea>
-                <small class="form-text text-muted">Recommended length: 150-160 characters</small>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="2"><%= category.seoDescription || '' %></textarea>
             </div>
             
             <div class="form-group">
                 <label for="seoKeywords">Meta Keywords</label>
                 <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= category.seoKeywords || '' %>">
-                <small class="form-text text-muted">Separate keywords with commas</small>
             </div>
         </div>
         
@@ -88,134 +120,197 @@
             <button type="submit" class="btn btn-primary">Update Category</button>
         </div>
     </form>
-
-    <hr> <div class="form-actions mt-4">
-        <button type="button" class="btn btn-danger" id="deleteCategoryBtn" data-category-id="<%= category._id %>">Delete Category</button>
-    </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- Quill Editor Setup ---
-        var quill = new Quill('#categoryDescriptionEditor', {
-            theme: 'snow',
-            placeholder: 'Write a detailed description...',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    ['blockquote', 'code-block'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'script': 'sub'}, { 'script': 'super' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
-                    [{ 'direction': 'rtl' }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'font': [] }],
-                    [{ 'align': [] }],
-                    ['link', 'image', 'video'],
-                    ['clean']
-                ]
-            }
-        });
+<link href="/css/form-enhancements.css" rel="stylesheet">
 
-        // Set initial content for Quill from existing data
-        const initialDescription = document.getElementById('categoryDescription').value;
-        if (initialDescription) {
-            quill.root.innerHTML = initialDescription;
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Rich Text Editor Initialization ---
+        const descriptionEditor = document.getElementById('categoryDescriptionEditor');
+        const hiddenDescriptionInput = document.getElementById('categoryDescription');
+        let quill;
+
+        if (descriptionEditor && typeof Quill !== 'undefined') {
+            quill = new Quill(descriptionEditor, {
+                theme: 'snow',
+                placeholder: 'Write the detailed description here...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            if (hiddenDescriptionInput.value) {
+                quill.root.innerHTML = hiddenDescriptionInput.value;
+            }
+
+            quill.on('text-change', () => {
+                hiddenDescriptionInput.value = quill.root.innerHTML;
+            });
+        } else if (descriptionEditor) {
+            const fallbackTextarea = document.createElement('textarea');
+            fallbackTextarea.name = 'description';
+            fallbackTextarea.className = 'form-control';
+            fallbackTextarea.rows = '10';
+            fallbackTextarea.value = hiddenDescriptionInput.value;
+            descriptionEditor.parentNode.replaceChild(fallbackTextarea, descriptionEditor);
+            hiddenDescriptionInput.remove();
         }
 
-        // On form submit, update hidden input with Quill's HTML content
-        document.getElementById('editCategoryForm').addEventListener('submit', function() {
-            document.getElementById('categoryDescription').value = quill.root.innerHTML;
-        });
+        // --- Cover Image Replacement Logic ---
+        const replaceCoverImageCheckbox = document.getElementById('replaceCoverImage');
+        const newCoverImageUploadContainer = document.getElementById('newCoverImageUpload');
+        const newCoverImageInput = document.getElementById('newCoverImageInput');
+        const originalImageHiddenInput = document.querySelector('.current-cover-image input[name="image"]');
 
-        // --- Image Preview Logic ---
-        const coverImageInput = document.getElementById('coverImage');
-        const imagePreview = document.getElementById('imagePreview');
-        const imagePreviewImg = imagePreview.querySelector('img');
-
-        coverImageInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreviewImg.src = e.target.result;
-                    imagePreviewImg.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                // If no new file selected, revert to existing or hide
-                if ('<%= category.image %>' && '<%= category.image %>' !== 'null' && '<%= category.image %>' !== 'undefined') {
-                    imagePreviewImg.src = '<%= category.image %>';
-                    imagePreviewImg.style.display = 'block';
+        if (replaceCoverImageCheckbox) {
+            replaceCoverImageCheckbox.addEventListener('change', () => {
+                if (replaceCoverImageCheckbox.checked) {
+                    newCoverImageUploadContainer.style.display = 'block';
+                    if (originalImageHiddenInput) originalImageHiddenInput.value = 'new';
                 } else {
-                    imagePreviewImg.src = '';
-                    imagePreviewImg.style.display = 'none';
+                    newCoverImageUploadContainer.style.display = 'none';
+                    newCoverImageInput.value = '';
+                    document.getElementById('newCoverImagePreview').innerHTML = '';
+                    if (originalImageHiddenInput) originalImageHiddenInput.value = 'keep';
                 }
-            }
-        });
+            });
+        }
 
-        // --- Name to Slug Generation ---
+        // --- Image Preview ---
+        const newCoverImagePreview = document.getElementById('newCoverImagePreview');
+        if (newCoverImageInput && newCoverImagePreview) {
+            newCoverImageInput.addEventListener('change', (event) => {
+                newCoverImagePreview.innerHTML = '';
+                const file = event.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.maxWidth = '100%';
+                        img.style.marginTop = '10px';
+                        newCoverImagePreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // --- Slug Generation ---
         const categoryNameInput = document.getElementById('categoryName');
         const categorySlugInput = document.getElementById('categorySlug');
 
-        // Simple slug generation function (you can make this more robust if needed)
         function generateSlug(text) {
-            return text
-                .toString()
-                .normalize('NFD') // normalize to NFD Unicode form
-                .replace(/[\u0300-\u036f]/g, '') // remove diacritic marks
-                .toLowerCase()
-                .trim()
-                .replace(/\s+/g, '-') // Replace spaces with -
-                .replace(/[^\w-]+/g, '') // Remove all non-word chars
-                .replace(/--+/g, '-'); // Replace multiple - with single -
+            return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+                .replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
         }
 
         categoryNameInput.addEventListener('input', function() {
-            if (categorySlugInput.readOnly) { // Only auto-generate if not manually edited
+            if (categorySlugInput.readOnly || categorySlugInput.value === '') {
                 categorySlugInput.value = generateSlug(this.value);
             }
         });
 
-        // Allow manual slug editing
-        categorySlugInput.addEventListener('focus', function() {
-            this.readOnly = false;
-        });
-        categorySlugInput.addEventListener('blur', function() {
-            // Re-slugify on blur if it was manually edited to ensure valid format
-            this.value = generateSlug(this.value);
-            // Optionally, you can set it back to readOnly after blur if desired,
-            // or leave it editable once focused.
-        });
-
         // --- Delete Category Logic ---
         const deleteCategoryBtn = document.getElementById('deleteCategoryBtn');
-        deleteCategoryBtn.addEventListener('click', function() {
-            const categoryId = this.dataset.categoryId;
-            if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-                fetch(`/categories/dashboard/delete/${categoryId}`, {
-                    method: 'POST', // Use POST for _method=DELETE if not directly using DELETE requests from client
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // You might need to add CSRF token here if you're using it
-                    },
-                    body: JSON.stringify({ _method: 'DELETE' }) // For method-override middleware
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        window.location.href = '/categories/dashboard'; // Redirect to categories list
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting category:', error);
-                    alert('An error occurred while deleting the category.');
-                });
-            }
-        });
+        if (deleteCategoryBtn) {
+            deleteCategoryBtn.addEventListener('click', () => {
+                const categoryId = deleteCategoryBtn.dataset.categoryId;
+                const categoryName = deleteCategoryBtn.dataset.categoryName;
+
+                if (confirm(`Are you sure you want to delete the category: ${categoryName}?`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/categories/dashboard/delete/${categoryId}?_method=DELETE`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
     });
+
+    // --- Multi-Select Country Logic ---
+const searchInput = document.getElementById('countrySearch');
+const dropdown = document.getElementById('countryDropdown');
+const tagsContainer = document.getElementById('tagsContainer');
+const realSelect = document.getElementById('categoryCountry');
+const dropdownItems = document.querySelectorAll('.dropdown-item');
+
+function updateTags() {
+    // Clear existing tags except the input
+    const tags = tagsContainer.querySelectorAll('.country-tag');
+    tags.forEach(tag => tag.remove());
+
+    // Add tags based on selected options in the real select
+    Array.from(realSelect.selectedOptions).forEach(option => {
+        const tag = document.createElement('span');
+        tag.className = 'country-tag';
+        tag.innerHTML = `${option.text} <span class="remove-tag" data-id="${option.value}">&times;</span>`;
+        tagsContainer.insertBefore(tag, searchInput);
+    });
+
+    // Mark items in dropdown as selected
+    dropdownItems.forEach(item => {
+        const isSelected = Array.from(realSelect.selectedOptions).some(opt => opt.value === item.dataset.id);
+        item.classList.toggle('selected', isSelected);
+    });
+}
+
+// Show dropdown on focus
+searchInput.addEventListener('focus', () => {
+    dropdown.style.display = 'block';
+});
+
+// Filter dropdown
+searchInput.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    dropdownItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(term) ? 'block' : 'none';
+    });
+});
+
+// Handle item selection
+dropdown.addEventListener('click', (e) => {
+    if (e.target.classList.contains('dropdown-item') && !e.target.classList.contains('selected')) {
+        const id = e.target.dataset.id;
+        const option = Array.from(realSelect.options).find(opt => opt.value === id);
+        if (option) {
+            option.selected = true;
+            updateTags();
+            searchInput.value = '';
+            // searchInput.focus();
+        }
+    }
+});
+
+// Handle tag removal
+tagsContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-tag')) {
+        const id = e.target.dataset.id;
+        const option = Array.from(realSelect.options).find(opt => opt.value === id);
+        if (option) {
+            option.selected = false;
+            updateTags();
+        }
+    }
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.multi-select-container')) {
+        dropdown.style.display = 'none';
+    }
+});
+
+// Initial load
+updateTags();
 </script>

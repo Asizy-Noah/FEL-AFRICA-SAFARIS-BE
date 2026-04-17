@@ -6,12 +6,9 @@
                 <i class="fas fa-plus"></i>
             </a>
             <div class="search-container">
-                <form action="/destinations/dashboard/destinations" method="GET" class="search-form">
-                    <input type="text" name="search" class="search-input" placeholder="Search by name, description, keywords..." id="destinationSearchInput" value="<%= query && query.search ? query.search : '' %>">
-                    <button type="submit" style="display: none;"></button>
-                </form>
+                <input type="text" class="search-input" placeholder="Search destinations..." id="destinationSearchInput" value="<%= query.search || '' %>">
             </div>
-            <button class="refresh-btn" onclick="location.href='/destinations/dashboard/destinations'">
+            <button class="refresh-btn" id="refreshDestinations">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
@@ -21,39 +18,105 @@
         <div class="alert alert-success"><%= messages.success_msg %></div>
     <% } %>
 
-    <% if (destinations && destinations.length > 0) { %>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Country</th>
-                    <th>Categories</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% destinations.forEach(function(dest) { %>
-                    <tr>
-                        <td><%= dest.name %></td>
-                        <td><%= dest.country ? dest.country.name || dest.country : '—' %></td>
-                        <td>
+    <div class="categories-grid"> <% if (destinations && destinations.length > 0) { %>
+            <% destinations.forEach(function(dest) { %>
+                <div class="category-card" data-id="<%= dest._id %>"> <div class="category-image">
+                        <% if (dest.coverImage) { %>
+                            <img src="<%= dest.coverImage %>" alt="<%= dest.name %>">
+                        <% } else { %>
+                            <img src="/img/placeholder.jpg" alt="No Image"> 
+                        <% } %>
+                    </div>
+                    
+                    <div class="category-content">
+                        <h3 class="category-title"><%= dest.name %></h3>
+                        
+                        <p class="category-country">
+                            <i class="fas fa-map-marker-alt"></i> 
+                            <strong>Country:</strong> <%= dest.country ? (dest.country.name || dest.country) : '—' %>
+                        </p>
+
+                        <p class="category-country" style="font-size: 0.85rem; color: #666;">
+                            <i class="fas fa-tags"></i>
+                            <strong>Categories:</strong> 
                             <% if (dest.categories && dest.categories.length > 0) { %>
                                 <%= dest.categories.map(c => (c.name ? c.name : c)).join(', ') %>
                             <% } else { %>
                                 —
                             <% } %>
-                        </td>
-                        <td>
-                            <a href="/destinations/dashboard/destinations/edit/<%= dest._id %>" class="btn btn-sm btn-outline">Edit</a>
-                            <form action="/destinations/dashboard/destinations/<%= dest._id %>?_method=DELETE" method="POST" style="display:inline-block;">
-                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                <% }); %>
-            </tbody>
-        </table>
-    <% } else { %>
-        <p>No destinations found.</p>
+                        </p>
+                    </div>
+
+                    <div class="category-actions">
+                        <a href="/destinations/dashboard/destinations/edit/<%= dest._id %>" class="action-btn edit-btn">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="/destinations/dashboard/destinations/<%= dest._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this destination?')">
+                            <button class="action-btn delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12 text-center py-5">
+                <p>No destinations found.</p>
+            </div>
+        <% } %>
+    </div>
+
+    <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
+        <div class="pagination">
+            <button class="pagination-btn" id="prevPageBtn" <%= !pagination.hasPrevPage ? 'disabled' : '' %> data-page="<%= pagination.prevPage %>">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                <button class="pagination-btn page-number-btn <%= i === pagination.currentPage ? 'active' : '' %>" data-page="<%= i %>">
+                    <%= i %>
+                </button>
+            <% } %>
+            <button class="pagination-btn" id="nextPageBtn" <%= !pagination.hasNextPage ? 'disabled' : '' %> data-page="<%= pagination.nextPage %>">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
     <% } %>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const destinationSearchInput = document.getElementById('destinationSearchInput');
+    const refreshBtn = document.getElementById('refreshDestinations');
+    const paginationContainer = document.querySelector('.pagination');
+
+    function updateList() {
+        const search = destinationSearchInput.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('search', search);
+        url.searchParams.set('page', '1'); // Reset to page 1 on search
+        window.location.href = url.toString();
+    }
+
+    // Search on Enter
+    destinationSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') updateList();
+    });
+
+    // Refresh button
+    refreshBtn.addEventListener('click', () => {
+        window.location.href = '/destinations/dashboard/destinations';
+    });
+
+    // Pagination Click
+    if (paginationContainer) {
+        paginationContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.pagination-btn');
+            if (btn && !btn.disabled) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', btn.dataset.page);
+                window.location.href = url.toString();
+            }
+        });
+    }
+});
+</script>

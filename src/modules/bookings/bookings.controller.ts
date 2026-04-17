@@ -1,13 +1,14 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Req, Res, Render, Query } from "@nestjs/common"
 import { Response } from "express"
 import { BookingsService } from "./bookings.service"
-import type { CreateBookingDto } from "./dto/create-booking.dto"
-import type { UpdateBookingDto } from "./dto/update-booking.dto"
+import { CreateBookingDto } from "./dto/create-booking.dto"
+import { UpdateBookingDto } from "./dto/update-booking.dto"
 import { RolesGuard } from "../auth/guards/roles.guard"
 import { Roles } from "../auth/decorators/roles.decorator"
 import { UserRole } from "../users/schemas/user.schema"
 import { BookingStatus } from "./schemas/booking.schema"
 import { ToursService } from "../tours/tours.service"
+import { MailService } from "../mail/mail.service"
 import { UsersService } from "../users/users.service"
 import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
 import { Types } from 'mongoose'; 
@@ -18,6 +19,7 @@ export class BookingsController {
     private readonly bookingsService: BookingsService,
     private readonly toursService: ToursService,
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
   ) {}
 
   @Post()
@@ -198,4 +200,27 @@ export class BookingsController {
       return res.redirect("/bookings/dashboard")
     }
   }
+
+  //=================
+  // SEND QUOTE ENDPOINT
+  //=================
+
+  @Post("quote")
+async createQuote(@Body() body: any, @Res() res: Response, @Req() req: any) {
+    const redirectUrl = req.get('Referer') || '/';
+
+    try {
+        // 1. Just send the email
+        await this.mailService.sendQuoteRequestNotification(body);
+
+        // 2. Set the success message
+        req.flash("success_msg", "Your enquiry has been sent to our team! We will get back to you shortly.");
+        
+        return res.redirect(redirectUrl);
+    } catch (error) {
+        console.error("Mail Error:", error);
+        req.flash("error_msg", "There was an error sending your message. Please try again or email us directly.");
+        return res.redirect(redirectUrl);
+    }
+}
 }

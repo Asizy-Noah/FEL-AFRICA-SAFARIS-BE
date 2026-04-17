@@ -1,37 +1,33 @@
 // src/modules/pages/pages.controller.ts
-
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Req,
-  Res,
-  Render,
-  Query,
-  UseInterceptors,
-  UploadedFiles, // Remains UploadedFiles for FileFieldsInterceptor //
-  HttpException,
-  HttpStatus,
-  Patch,
-  Delete,
-  NotFoundException,
-  BadRequestException,
+  Controller, Get, Post, Body, Param, UseGuards, Req, Res, Render,
+  Query, UseInterceptors, UploadedFiles, HttpException, Patch, Delete,
+  NotFoundException, BadRequestException,
 } from "@nestjs/common";
-import { FileFieldsInterceptor, AnyFilesInterceptor } from "@nestjs/platform-express";
+import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
+import { diskStorage } from "multer";
+import { extname, join } from "path";
 import { PagesService } from "./pages.service";
-import type { CreatePageDto } from "./dto/create-page.dto";
-import type { UpdatePageDto } from "./dto/update-page.dto";
+import { CreatePageDto } from "./dto/create-page.dto";
+import { UpdatePageDto } from "./dto/update-page.dto";
 import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRole } from "../users/schemas/user.schema";
 import { PageStatus, PageType } from "./schemas/page.schema";
-
 import { LocalStorageService } from "../google-cloud/local-storage.service";
+
+// Multer configuration for local storage
+const multerOptions = {
+  storage: diskStorage({
+    destination: './public/uploads/pages',
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+    },
+  }),
+};
 
 @Controller("pages")
 export class PagesController {
@@ -40,54 +36,25 @@ export class PagesController {
     private readonly localStorageService: LocalStorageService
   ) {}
 
-  // --- Dashboard Pages List ---
   @Get("dashboard")
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Render("dashboard/pages/index")
   async getPages(@Query() query: any, @Req() req) {
-    try {
-      const { pages, totalPages, currentPage } = await this.pagesService.findAll(query);
-      const messages = req.flash();
-
-      return {
-        title: "Pages - Dashboard",
-        pages,
-        user: req.user,
-        query: {
-          search: query.search || "",
-          status: query.status || "",
-          page: currentPage,
-          limit: query.limit || 10,
-        },
-        totalPages,
-        currentPage,
-        layout: "layouts/dashboard",
-        messages: {
-          success_msg: messages.success_msg,
-          error_msg: messages.error_msg,
-          error: messages.error,
-        },
-        pageStatuses: Object.values(PageStatus),
-      };
-    } catch (error) {
-      console.error("Error fetching dashboard pages:", error);
-      req.flash("error_msg", "Failed to load pages: " + error.message);
-      return {
-        title: "Pages - Dashboard",
-        pages: [],
-        user: req.user,
-        query: { search: "", status: "", page: 1, limit: 10 },
-        totalPages: 0,
-        currentPage: 1,
-        layout: "layouts/dashboard",
-        messages: req.flash(),
-        pageStatuses: Object.values(PageStatus),
-      };
-    }
+    const { pages, totalPages, currentPage } = await this.pagesService.findAll(query);
+    return {
+      title: "Pages - Dashboard",
+      pages,
+      user: req.user,
+      query: { search: query.search || "", status: query.status || "", page: currentPage, limit: query.limit || 10 },
+      totalPages,
+      currentPage,
+      layout: "layouts/dashboard",
+      messages: req.flash(),
+      pageStatuses: Object.values(PageStatus),
+    };
   }
 
-  // --- Add Page Form ---
   @Get("dashboard/add")
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -113,14 +80,10 @@ export class PagesController {
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @UseInterceptors(
-    // Use FileFieldsInterceptor to explicitly map field names to uploaded files
     FileFieldsInterceptor([
       { name: 'coverImage', maxCount: 1 },
-      { name: 'galleryImages', maxCount: 10 }, // Max 10 gallery images
-      // If you have images uploaded via a rich text editor (e.g., TinyMCE's image upload),
-      // they might have a different field name or need a separate interceptor.
-      // For now, assume these are the only direct file uploads.
-    ])
+      { name: 'galleryImages', maxCount: 10 },
+    ], multerOptions)
   )
   async addPage(
     @Body() createPageDto: CreatePageDto,
@@ -129,73 +92,29 @@ export class PagesController {
     @Res() res: Response
   ) {
     try {
-      // Process cover image
-      const coverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
-      if (coverImageFile) {
-        createPageDto.coverImage = `/uploads/pages/${coverImageFile.filename}`;
-      } else if (createPageDto.coverImage === '') {
-        createPageDto.coverImage = null; // Clear if client explicitly sends empty string
+      // 1. Parse JSON Content Blocks from script
+      if (typeof createPageDto.contentBlocks === 'string') {
+        createPageDto.contentBlocks = JSON.parse(createPageDto.contentBlocks);
       }
 
-      // Process gallery images
-      const galleryImageFiles = uploadedFiles.galleryImages || [];
-      if (galleryImageFiles.length > 0) {
-        const galleryImageUrls: string[] = [];
-        for (const file of galleryImageFiles) {
-          const url = `/uploads/pages/${file.filename}`;
-          
-          galleryImageUrls.push(url);
-        }
-        createPageDto.galleryImages = galleryImageUrls;
-      } else if (!createPageDto.galleryImages) {
-        createPageDto.galleryImages = []; // Ensure it's an empty array if no new files and no existing
+      // 2. Handle Cover Image
+      if (uploadedFiles.coverImage?.[0]) {
+        createPageDto.coverImage = `/uploads/pages/${uploadedFiles.coverImage[0].filename}`;
       }
 
-      // Handle slug generation
-      if (!createPageDto.slug && createPageDto.title) { 
-        createPageDto.slug = createPageDto.title
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, "")
-          .trim()
-          .replace(/\s+/g, "-");
+      // 3. Handle Gallery Images
+      if (uploadedFiles.galleryImages?.length > 0) {
+        createPageDto.galleryImages = uploadedFiles.galleryImages.map(f => `/uploads/pages/${f.filename}`);
+      } else {
+        createPageDto.galleryImages = [];
       }
 
       await this.pagesService.create(createPageDto, req.user.id);
-
       req.flash("success_msg", "Page added successfully");
       return res.redirect("/pages/dashboard");
     } catch (error) {
-      console.error("Error adding page:", error);
-      let flashMessage = "Failed to add page.";
-      // ... (rest of error handling remains the same) ...
-      if (error instanceof HttpException) {
-        const response = error.getResponse();
-        if (typeof response === "object" && response !== null && "message" in response) {
-          if (Array.isArray(response.message)) {
-            flashMessage = response.message.join(", ");
-          } else {
-            flashMessage = response.message as string;
-          }
-        } else if (typeof response === "string") {
-          flashMessage = response;
-        } else {
-          flashMessage = error.message || "An unknown error occurred.";
-        }
-      } else if (error.message) {
-        if (error.code === 11000 && error.keyPattern && error.keyValue) {
-          if (error.keyPattern.slug)
-            flashMessage =
-              "A page with this slug already exists. Please choose a different title or slug.";
-          else if (error.keyPattern.title)
-            flashMessage = "A page with this title already exists.";
-          else flashMessage = "A duplicate entry error occurred.";
-        } else {
-          flashMessage = error.message;
-        }
-      }
-
-      req.flash("error_msg", flashMessage);
-      req.flash("oldInput", createPageDto);
+      console.error("Add Page Error:", error);
+      req.flash("error_msg", error.message || "Failed to add page.");
       return res.redirect("/pages/dashboard/add");
     }
   }
@@ -234,132 +153,78 @@ export class PagesController {
     }
   }
 
-  // --- Handle Update Page Submission (using PATCH for clarity) ---
-  @Patch("dashboard/edit/:id")
-  @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'coverImage', maxCount: 1 },
-      { name: 'galleryImages', maxCount: 10 },
-    ])
-  )
-  async updatePage(
-    @Param("id") id: string,
-    @Body() updatePageDto: UpdatePageDto,
-    @UploadedFiles() uploadedFiles: { coverImage?: Express.Multer.File[], galleryImages?: Express.Multer.File[] },
-    @Req() req,
-    @Res() res: Response,
-  ) {
-    try {
-      const existingPage = await this.pagesService.findOne(id);
-      if (!existingPage) {
-        throw new NotFoundException(`Page with ID ${id} not found.`);
-      }
+  // src/modules/pages/pages.controller.ts
 
-      // Handle Cover Image
-      const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
-      if (newCoverImageFile) {
-        const newImageUrl = `/uploads/pages/${newCoverImageFile.filename}`;
-        // If there was an old image, delete it
-        if (existingPage.coverImage) {
-          await this.localStorageService.deleteFile(existingPage.coverImage);
-        }
-        updatePageDto.coverImage = newImageUrl;
-          // If the client sent an empty string, it means the user wants to remove the image
-          if (existingPage.coverImage) {
-              await this.localStorageService.deleteFile(existingPage.coverImage);
-          }
-          updatePageDto.coverImage = null;
-      } else {
-          // If no new file and not explicitly removed, retain the existing one
-          updatePageDto.coverImage = existingPage.coverImage;
-      }
+@Patch("dashboard/edit/:id")
+@UseGuards(SessionAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+@UseInterceptors(
+  FileFieldsInterceptor([
+    { name: 'coverImage', maxCount: 1 },
+    { name: 'galleryImages', maxCount: 10 },
+  ], multerOptions)
+)
+// src/modules/pages/pages.controller.ts
 
-      // Handle Gallery Images
-      const newGalleryImageFiles = uploadedFiles.galleryImages || [];
-      let currentGalleryImages = existingPage.galleryImages || [];
+async updatePage(
+  @Param("id") id: string,
+  @Body() updatePageDto: UpdatePageDto,
+  @UploadedFiles() uploadedFiles: { coverImage?: Express.Multer.File[], galleryImages?: Express.Multer.File[] },
+  @Req() req,
+  @Res() res: Response,
+) {
+  try {
+    const existingPage = await this.pagesService.findOne(id);
+    if (!existingPage) throw new NotFoundException("Page not found");
 
-      // Filter out removed gallery images (assuming client sends `removedGalleryImages` as a comma-separated string)
-      const removedGalleryImagePaths = (updatePageDto as any).removedGalleryImages
-        ? (updatePageDto as any).removedGalleryImages.split(',').map((img: string) => img.trim()).filter(Boolean)
-        : [];
-
-      // Delete removed images
-      for (const imageUrl of removedGalleryImagePaths) {
-          await this.localStorageService.deleteFile(imageUrl);
-      }
-      currentGalleryImages = currentGalleryImages.filter(img => !removedGalleryImagePaths.includes(img));
-
-      // Add newly uploaded gallery images
-      if (newGalleryImageFiles.length > 0) {
-        const newlyAddedGalleryPaths: string[] = [];
-        for (const file of newGalleryImageFiles) {
-          const url = `/uploads/pages/${file.filename}`;
-          newlyAddedGalleryPaths.push(url);
-        }
-        currentGalleryImages = [...currentGalleryImages, ...newlyAddedGalleryPaths];
-      }
-      updatePageDto.galleryImages = currentGalleryImages;
-
-      // Remove the temporary 'removedGalleryImages' from DTO before saving to DB
-      delete (updatePageDto as any).removedGalleryImages;
-
-
-      // Handle slug generation
-      if (updatePageDto.title && updatePageDto.title !== existingPage.title && !updatePageDto.slug) {
-          updatePageDto.slug = updatePageDto.title
-              .toLowerCase()
-              .replace(/[^a-z0-9\s-]/g, '')
-              .trim()
-              .replace(/\s+/g, '-');
-      } else if (updatePageDto.slug && updatePageDto.slug !== existingPage.slug) {
-          // If slug was manually provided/changed, you might want to sanitize it
-          updatePageDto.slug = updatePageDto.slug
-              .toLowerCase()
-              .replace(/[^a-z0-9\s-]/g, '')
-              .trim()
-              .replace(/\s+/g, '-');
-      }
-
-
-      await this.pagesService.update(id, updatePageDto, req.user.id);
-
-      req.flash("success_msg", "Page updated successfully");
-      return res.redirect("/pages/dashboard");
-    } catch (error) {
-      console.error("Error updating page:", error);
-      let flashMessage = "Failed to update page.";
-      // ... (rest of error handling remains the same) ...
-      if (error instanceof HttpException) {
-        const response = error.getResponse();
-        if (typeof response === "object" && response !== null && "message" in response) {
-          if (Array.isArray(response.message)) {
-            flashMessage = response.message.join(", ");
-          } else {
-            flashMessage = response.message as string;
-          }
-        } else if (typeof response === "string") {
-          flashMessage = response;
-        } else {
-          flashMessage = error.message || "An unknown error occurred.";
-        }
-      } else if (error.message) {
-        if (error.code === 11000 && error.keyPattern && error.keyValue) {
-          if (error.keyPattern.slug)
-            flashMessage =
-              "A page with this slug already exists. Please choose a different title or slug.";
-          else flashMessage = "A duplicate entry error occurred.";
-        } else {
-          flashMessage = error.message;
-        }
-      }
-
-      req.flash("error_msg", flashMessage);
-      req.flash("oldInput", updatePageDto);
-      return res.redirect(`/pages/dashboard/edit/${id}`);
+    // 1. Parse JSON Content Blocks
+    if (updatePageDto.contentBlocks && typeof updatePageDto.contentBlocks === 'string') {
+        updatePageDto.contentBlocks = JSON.parse(updatePageDto.contentBlocks);
     }
+
+    // 2. FIXED: Cover Image Logic
+    const newCoverFile = uploadedFiles?.coverImage?.[0];
+    if (newCoverFile) {
+      // User uploaded a NEW cover image
+      if (existingPage.coverImage) {
+        await this.localStorageService.deleteFile(existingPage.coverImage);
+      }
+      updatePageDto.coverImage = `/uploads/pages/${newCoverFile.filename}`;
+    } else {
+      // No new file uploaded, KEEP the current one (unless it was already null)
+      updatePageDto.coverImage = existingPage.coverImage;
+    }
+
+    // 3. Gallery Logic
+    let currentGallery = existingPage.galleryImages || [];
+    const removedStr = (updatePageDto as any).removedGalleryImages || '';
+    if (removedStr) {
+      const removedPaths = removedStr.split(',').filter(Boolean);
+      for (const path of removedPaths) {
+        await this.localStorageService.deleteFile(path);
+        currentGallery = currentGallery.filter(img => img !== path);
+      }
+    }
+
+    if (uploadedFiles.galleryImages?.length > 0) {
+      const newPaths = uploadedFiles.galleryImages.map(f => `/uploads/pages/${f.filename}`);
+      currentGallery = [...currentGallery, ...newPaths];
+    }
+    updatePageDto.galleryImages = currentGallery;
+
+    // Cleanup
+    delete (updatePageDto as any).removedGalleryImages;
+
+    // 4. Update Database
+    await this.pagesService.update(id, updatePageDto, req.user.id);
+    
+    req.flash("success_msg", "Page updated successfully");
+    return res.redirect("/pages/dashboard");
+  } catch (error) {
+    req.flash("error_msg", error.message);
+    return res.redirect(`/pages/dashboard/edit/${id}`);
   }
+}
 
   // --- Handle Delete Page Submission (using DELETE for better RESTfulness) ---
   @Delete("dashboard/:id") // Changed to DELETE route

@@ -1,18 +1,14 @@
 // src/modules/pages/dto/create-page.dto.ts
-import {
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  ValidateNested,
+import { Transform, Type } from "class-transformer";
+import { 
+  IsArray, IsEnum, IsNotEmpty, IsOptional, 
+  IsString, ValidateNested 
 } from "class-validator";
-import { Type, Transform } from "class-transformer"; // Import Transform
 import { PageStatus, PageType } from "../schemas/page.schema";
 
-// --- PageContentBlockDto: REMOVED 'image' field ---
 export class PageContentBlockDto {
   @IsString()
+  @IsNotEmpty()
   type: string;
 
   @IsOptional()
@@ -22,12 +18,8 @@ export class PageContentBlockDto {
   @IsOptional()
   @IsString()
   content?: string;
-
-  // REMOVED: @IsOptional() @IsString() image?: string;
-  // REMOVED: @IsOptional() @IsUrl() videoUrl?: string;
 }
 
-// --- Main Create Page DTO ---
 export class CreatePageDto {
   @IsNotEmpty()
   @IsString()
@@ -44,6 +36,18 @@ export class CreatePageDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PageContentBlockDto)
+  @IsOptional()
+  @Transform(({ value }) => {
+    // FIX: Parse the JSON string sent by the frontend back into an array
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return [];
+      }
+    }
+    return value;
+  })
   contentBlocks: PageContentBlockDto[];
 
   @IsOptional()
@@ -55,8 +59,10 @@ export class CreatePageDto {
   coverImage?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
+  @IsString()
+  removedGalleryImages?: string; // Add this line
+
+  @IsOptional()
   galleryImages?: string[];
 
   @IsOptional()
@@ -76,7 +82,7 @@ export class CreatePageDto {
   @IsString({ each: true })
   @Transform(({ value }) => {
     if (typeof value === 'string') {
-      return value.split(',').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
+      return value.split(',').map(k => k.trim()).filter(k => k.length > 0);
     }
     return value;
   })

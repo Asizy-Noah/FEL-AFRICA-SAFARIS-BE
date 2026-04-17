@@ -1,0 +1,948 @@
+    <!-- HERO SECTION -->
+    <section id="home" class="generic-hero-section">
+        <div class="generic-hero-content">
+            <h2 class="generic-hero-title">
+                <%= tour.title %> 
+            </h2>
+        </div>
+        <div class="generic-hero-overlay"></div>
+        <img src="<%= tour.coverImage %>" alt="<%= tour.title %>" class="hero-bg">
+        <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <section class="container description-section py-5 justify-content">
+    <div class="row">
+        <div class="col-lg-8 mb-5 mt-4 mb-lg-0 justify-content"> 
+            <h4 class=" post-title mb-4"><%= tour.title %></h4>
+            <section class="intro-section mb-5 justify-content">
+                <%- tour.overview %>
+            </section>
+
+            <section class="highlights-section">
+                <div class="mb-2">
+                    <h3 class="m-0 font-weight-bold sub-headngs">Tour Highlights</h3>
+                </div>
+                <ul class="highlight-list">
+                    <% if (tour.highlights) { %>
+                        <% tour.highlights.split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                            <li><%= item %></li>
+                        <% }); %>
+                    <% } else { %>
+                        <li>Highlights coming soon...</li>
+                    <% } %>
+                </ul>
+            </section>
+
+            <section class="itinerary-section">
+                <div class="mb-2">
+                    <h3 class="m-0 font-weight-bold sub-headngs">Detailed Itinerary Day By Day</h3>
+                </div>
+                
+                <% if (tour.itineraries && tour.itineraries.length > 0) { %>
+                    <% tour.itineraries.forEach(function(itinerary) { %>
+                        <div class="itinerary-item">
+                            <div class="itinerary-header" onclick="toggleItinerary(this)">
+                                <h3>Day <%= itinerary.day %>: <%= itinerary.title %></h3>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="itinerary-content">
+                                <div class="itinerary-details justify-content">
+                                    <%- itinerary.description %>
+                                </div>
+                                <div class="itinerary-meta">
+                                    <% if (itinerary.accommodation) { %>
+                                        <div class="itinerary-meta-item">
+                                            <h4>Accommodation</h4>
+                                            <p><%= itinerary.accommodation %></p>
+                                        </div>
+                                    <% } %>
+                                    <% if (itinerary.meals) { %>
+                                        <div class="itinerary-meta-item">
+                                            <h4>Meal Plan</h4>
+                                            <p><%= itinerary.meals %></p>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p>No detailed itinerary available for this tour.</p>
+                <% } %>
+            </section>
+
+            <section class="cost-section">
+                <div class="cost-container">
+                    <div class="cost-box">
+                        <h3>Cost Includes</h3>
+                        <ul class="cost-list cost-includes">
+                            <% if (tour.priceIncludes) { %>
+                                <% tour.priceIncludes.split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                                    <li><%= item %></li>
+                                <% }); %>
+                            <% } else { %>
+                                <li>Contact us for inclusion details.</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                    
+                    <div class="cost-box">
+                        <h3>Cost Excludes</h3>
+                        <ul class="cost-list cost-excludes">
+                            <% if (tour.priceExcludes) { %>
+                                <% tour.priceExcludes.split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                                    <li><%= item %></li>
+                                <% }); %>
+                            <% } else { %>
+                                <li>Contact us for exclusion details.</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tour-policies-section py-4">
+                <!-- <div class="info-accordion mb-4">
+                    <div class="info-header" onclick="toggleAccordion('additionalInfo')">
+                        <h3>Additional Info</h3>
+                        <i class="fas fa-chevron-up" id="additionalInfo-icon"></i>
+                    </div>
+                    <div class="info-body" id="additionalInfo">
+                        <div class="row">
+                            <div class="col-12">
+                                    <div class="policy-text">
+                                        <ul class="policy-list">
+                                            <% if (tour.additionalInfo) { %>
+                                                <% tour.additionalInfo.split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                                                    <li><%= item %></li>
+                                                <% }); %>
+                                            <% } else { %>
+                                                <li>Confirmation will be received at time of booking</li>
+                                                <li>Not wheelchair accessible</li>
+                                                <li>Most travelers can participate</li>
+                                                <li>This is a private tour/activity. Only your group will participate</li>
+                                            <% } %>
+                                        </ul>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="policy-card h-100">
+                            <h3>Cancellation Policy</h3>
+                            <p>Please read our cancellation policy in the Travel Policy section before booking.</p>
+                            <button class="btn-show-more"><a href="/travel-policy#cancellation">Show more</a></button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="policy-card h-100">
+                            <h3>Questions?</h3>
+                            <p>Visit our Help Centre for any further questions.</p>
+                            <p class="product-code">Product code: <%= tour._id.toString().substring(0,8).toUpperCase() %></p>
+                            <a href="/enquiry" class="btn-help-center">Help Center</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div class="col-lg-4 ">
+
+            <!-- Search Start -->
+                    <!-- Search Widget -->
+                    <div class="sidebar-widget search-widget mb-4">
+                        <h3 class="widget-title">Search Posts</h3>
+                        <form class="search-form" id="blog-search-form">
+                            <input type="text" class="search-input" placeholder="Enter keywords..." id="blog-search-input">
+                            <button type="submit" class="search-btn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Search End -->
+
+                    <!-- Sticky Booking Form -->
+                    <div class="sidebar-widget booking-form sticky-form">
+                        <h3 class="widget-title">Book this Package Now</h3>
+                        <form id="bookingForm" action="/bookings" method="POST">
+                            <input type="hidden" name="tour" value="<%= tour._id %>">
+
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="name" name="fullName" required placeholder="Full Name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <input type="tel" class="form-control" id="phone" name="phoneNumber" placeholder="Phone Number" required>
+                            </div>
+                            
+                            <div class="form-group">
+                            <select class="form-control" id="country" name="country" required style="height: 3rem;">
+                                <!-- Placeholder option for clarity -->
+                                <option value="" selected>Country of Residence</option>
+                                <option value="Uganda">Uganda</option>
+                                <option value="Kenya">Kenya</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                            </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="travelDate">Preferred Travel Date</label>
+                                <input type="date" class="form-control" id="travelDate" name="travelDate">
+                            </div>
+                            
+                            <div class="form-group">
+                                <select class="form-control" id="travelers" name="numberOfAdults" required style="height: 3rem;">
+                                    <option value="">Number of Travelers</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group price-section">
+                                <p class="price-label">Your estimated Cost</p>
+                                <p class="price">$<%= tour.price %></p>
+                            </div>
+                            <button type="submit" class="filter-tab btn-block">Book Package</button>
+                            <button class="customize-package-btn btn-block"><a href="#customize">Customize Package</a></button>
+                        </form>
+                    </div>
+                    
+                    <!-- PAYMENT OPTIONS SECTION -->
+                    <!-- Add this below your booking form or where you want the payment section to appear -->
+
+                    <div id="paymentSection" class="payment-section" style="display: none;">
+                        <div class="payment-container">
+                            <div class="payment-header">
+                                <h3>Select Payment Method</h3>
+                                <button type="button" class="payment-close" onclick="closePaymentSection()">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+
+                            <!-- Order Summary -->
+                            <div class="order-summary">
+                                <h4>Order Summary</h4>
+                                <div class="summary-item">
+                                    <span>Tour Package</span>
+                                    <span id="summaryPackage">-</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Number of Travelers</span>
+                                    <span id="summaryTravelers">-</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Travel Date</span>
+                                    <span id="summaryDate">-</span>
+                                </div>
+                                <div class="summary-divider"></div>
+                                <div class="summary-total">
+                                    <span>Total Amount</span>
+                                    <span id="summaryTotal">$0</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment Methods -->
+                            <div class="payment-methods">
+                                <h4>Choose Payment Method</h4>
+                                
+                                <div class="payment-options">
+                                    <!-- Stripe -->
+                                    <label class="payment-option">
+                                        <input type="radio" name="paymentMethod" value="stripe" class="payment-radio">
+                                        <div class="payment-card">
+                                            <div class="payment-icon stripe-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.438 1.838-1.438.987 0 1.838.461 2.354 1.469l1.972-1.266c-.573-1.346-1.992-2.287-4.326-2.287-2.501 0-4.313 1.578-4.313 3.779 0 2.444 1.194 2.901 4.401 4.604 2.432 1.287 3.546 1.996 3.546 3.584 0 1.311-1.053 2.128-2.773 2.128-1.976 0-2.959-.922-3.515-2.361l-1.922 1.267c.667 1.79 2.123 2.871 5.437 2.871 2.924 0 4.882-1.577 4.882-3.885 0-2.115-1.079-2.857-4.239-4.411z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="payment-info">
+                                                <h5>Credit/Debit Card</h5>
+                                                <p>Visa, Mastercard</p>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <!-- PayPal -->
+                                    <label class="payment-option">
+                                        <input type="radio" name="paymentMethod" value="paypal" class="payment-radio">
+                                        <div class="payment-card">
+                                            <div class="payment-icon paypal-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 4-.04.22a.803.803 0 01-.793.68h-2.51a.585.585 0 01-.576-.68l.028-.16.56-3.54h-.028c.28-1.78 1.54-2.84 3.1-2.84h.9c1.82 0 3.24-.664 3.78-2.66.2-.74.22-1.52.06-2.2-.54-2.44-2.42-3.44-4.54-3.44h-.9c-1.56 0-2.82 1.06-3.1 2.84l-.56 3.54-.028.16c-.056.38.176.72.556.72h2.51a.585.585 0 00.576-.68l.04-.22.63-4 .04-.22c.084-.48.512-.8.998-.8h.5c2.01 0 3.58-.84 4.02-2.66.154-.662.112-1.36-.026-2.02"/>
+                                                </svg>
+                                            </div>
+                                            <div class="payment-info">
+                                                <h5>PayPal</h5>
+                                                <p>Fast & secure</p>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <!-- PesaPal -->
+                                    <label class="payment-option">
+                                        <input type="radio" name="paymentMethod" value="pesapal" class="payment-radio">
+                                        <div class="payment-card">
+                                            <div class="payment-icon pesapal-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="payment-info">
+                                                <h5>PesaPal</h5>
+                                                <p>Visa, Mastercard, Mobile Money</p>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <!-- Bank Transfer -->
+                                    <label class="payment-option">
+                                        <input type="radio" name="paymentMethod" value="bank" class="payment-radio">
+                                        <div class="payment-card">
+                                            <div class="payment-icon bank-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M2 10v8h20V10H2zm18 7H4v-5h16v5zm-8-8L3 5h18l-9 4z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="payment-info">
+                                                <h5>Bank Transfer</h5>
+                                                <p>Direct bank</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Payment Form -->
+                            <form id="paymentForm" class="payment-form">
+                                <!-- Card Payment Form -->
+                                <div id="cardPayment" class="payment-form-section" style="display: none;">
+                                    <h4>Card Details</h4>
+                                    <div class="form-group">
+                                        <label>Cardholder Name</label>
+                                        <input type="text" class="form-control" placeholder="John Doe" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Card Number</label>
+                                        <input type="text" class="form-control card-input" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Expiry Date</label>
+                                            <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>CVV</label>
+                                            <input type="text" class="form-control" placeholder="123" maxlength="4" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PesaPal Payment Form -->
+                                <div id="pesapalPayment" class="payment-form-section" style="display: none;">
+                                    <h4>PesaPal Payment</h4>
+                                    <div class="form-group">
+                                        <label>Email Address</label>
+                                        <input type="email" class="form-control" placeholder="your@email.com" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Phone Number</label>
+                                        <input type="tel" class="form-control" placeholder="254712345678" required>
+                                    </div>
+                                    <div class="info-box">
+                                        <p>You will be securely redirected to PesaPal to complete your payment. Accepted: Visa, Mastercard, MTN Mobile Money, and Airtel Mobile Money.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Bank Transfer Form -->
+                                <div id="bankPayment" class="payment-form-section" style="display: none;">
+                                    <h4>Bank Transfer Instructions</h4>
+                                    <div class="bank-details">
+                                        <div class="detail-row">
+                                            <strong>Bank Name:</strong>
+                                            <span>Kenya Commercial Bank (KCB)</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <strong>Account Name:</strong>
+                                            <span>Safari Tours Ltd</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <strong>Account Number:</strong>
+                                            <span>1234567890</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <strong>Swift Code:</strong>
+                                            <span>KCBLKENA</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <strong>Amount:</strong>
+                                            <span id="bankAmount">$0</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-box">
+                                        <p>Use your booking reference as the transaction description. We'll confirm your payment within 24 hours.</p>
+                                    </div>
+                                </div>
+
+                                <!-- PayPal -->
+                                <div id="paypalPayment" class="payment-form-section" style="display: none;">
+                                    <div class="info-box">
+                                        <p>You will be redirected to PayPal to complete your payment securely. Please do not close this window.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="payment-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="closePaymentSection()">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="payBtn">Pay Now</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+    </div>
+    </section>
+
+    <!-- YOU MAY ALSO BE INTERESTED IN SECTION -->
+    <section id="tours" class="safari-packages py-5">
+        <div class="container">
+            <h2 class="pages-section-title mb-5">You may also be interested in</h2>
+
+            <div class="blog-carousel-wrapper">
+                <button class="blog-carousel-nav-btn carousel-prev" data-carousel="itineraries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+            
+                <div class="blog-carousel-container itineraries-carousel">
+                    <div class="carousel-track">
+                        <% if (typeof relatedTours !== 'undefined' && relatedTours.length > 0) { %>
+                            <% relatedTours.forEach(t => { %>
+                            <div class="blog-carousel-slide itinerary-card">
+                                <div class="itinerary-image">
+                                    <img src="<%= t.coverImage %>" alt="<%= t.title %>">
+                                </div>
+                                <div class="package-info">
+                                    <h3><%= t.title %></h3>
+                                    <div class="d-flex justify-content-between mb-2 mt-3">
+                                        <small class="m-0"><i class="fa fa-calendar-alt me-1"></i><%= t.days %> days</small>
+                                        <small class="m-0"><i class="fa fa-user me-1"></i><%= t.groupSize || '2' %> Person</small>
+                                    </div>
+                                    <p class="price">$<%= t.price.toLocaleString() %></p>
+                                    <p>
+                                        <% 
+                                        const cleanOverview = (t.overview || '').replace(/<[^>]*>?/gm, '');
+                                        const truncatedText = cleanOverview.length > 120 ? cleanOverview.substring(0, 120) + '...' : cleanOverview;
+                                        %>
+                                        <%= truncatedText %>
+                                    </p>
+                                    <a href="/tours/<%= t.slug %>">
+                                        <button class="filter-tab">View Package</button>
+                                    </a>
+                                </div>
+                            </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="col-12 text-center no-tours-msg">
+                                <p>No related packages found in this destination.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <button class="blog-carousel-nav-btn carousel-next" data-carousel="itineraries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECENTLY VIEWED SECTION -->
+    <section class="featured-itineraries-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Recently Viewed Itineraries</h2>
+        </div>
+
+        <div class="blog-carousel-wrapper">
+            <button class="blog-carousel-nav-btn carousel-prev" data-carousel="trending-carousel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+
+            <div class="blog-carousel-container trending-carousel">
+                <div class="carousel-track">
+                    <% if (typeof recentlyViewed !== 'undefined' && recentlyViewed.length > 1) { %>
+                        <% recentlyViewed.forEach(rvTour => { %>
+                            <% if (rvTour._id.toString() !== tour._id.toString()) { %> 
+                            <div class="blog-carousel-slide itinerary-card">
+                                <div class="itinerary-image"><img src="<%= rvTour.coverImage %>" alt="<%= rvTour.title %>"></div>
+                                <div class="package-info">
+                                    <h3><%= rvTour.title %></h3>
+                                    <div class="d-flex justify-content-between mb-2 mt-3">
+                                        <small class="m-0"><i class="fa fa-calendar-alt me-1"></i><%= rvTour.days %> days</small>
+                                        <small class="m-0"><i class="fa fa-user me-1"></i><%= rvTour.groupSize || '2' %> Person</small>
+                                    </div>
+                                    <p class="price">$<%= rvTour.price ? rvTour.price.toLocaleString() : 'N/A' %></p>
+                                    <p>
+                                        <% 
+                                        const cleanRV = (rvTour.overview || '').replace(/<[^>]*>?/gm, '');
+                                        const truncRV = cleanRV.length > 100 ? cleanRV.substring(0, 100) + '...' : cleanRV;
+                                        %>
+                                        <%= truncRV %>
+                                    </p>
+                                    <a href="/tours/<%= rvTour.slug %>">
+                                        <button class="filter-tab">View Package</button>
+                                    </a>
+                                </div>
+                            </div>
+                            <% } %>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="text-center w-100">Your recently viewed tours will appear here.</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <button class="blog-carousel-nav-btn carousel-next" data-carousel="trending-carousel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </div>
+</section>
+
+    <script>
+        // Toggle Itinerary Items
+        function toggleItinerary(element) {
+            const content = element.nextElementSibling;
+            const icon = element.querySelector('i');
+            
+            // Close all other itineraries
+            document.querySelectorAll('.itinerary-content').forEach(item => {
+                if (item !== content && item.classList.contains('active')) {
+                    item.classList.remove('active');
+                    item.style.display = 'none';
+                    item.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
+                    item.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
+                }
+            });
+            
+            // Toggle current itinerary
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                content.style.display = 'none';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                content.classList.add('active');
+                content.style.display = 'block';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        }
+
+        // Sticky Form Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.booking-form');
+            const mainContent = document.querySelector('.col-lg-8');
+            
+            if (window.innerWidth >= 992) { // Only on desktop
+                const formHeight = form.offsetHeight;
+                const contentHeight = mainContent.offsetHeight;
+                
+                if (formHeight < contentHeight) {
+                    window.addEventListener('scroll', function() {
+                        const formTop = form.getBoundingClientRect().top;
+                        const contentBottom = mainContent.getBoundingClientRect().bottom;
+                        
+                        if (formTop <= 20 && contentBottom > 0) {
+                            form.style.position = 'sticky';
+                            form.style.top = '20px';
+                        } else if (contentBottom <= 0) {
+                            form.style.position = 'relative';
+                            form.style.top = `${contentHeight - formHeight}px`;
+                        } else {
+                            form.style.position = 'sticky';
+                            form.style.top = '20px';
+                        }
+                    });
+                }
+            }
+            
+            // Form submission
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Thank you for your inquiry! We will contact you shortly.');
+                this.reset();
+            });
+        });
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            
+            if (content.style.display === "none") {
+                content.style.display = "block";
+                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            } else {
+                content.style.display = "none";
+                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+            }
+        }
+
+        function showMorePolicy() {
+            // You can replace this with a modal or expansion logic
+            alert("Full Cancellation Policy: You can cancel up to 24 hours in advance for a full refund. Cancellations made less than 24 hours before the start time will not be refunded.");
+        }
+
+        // ================================
+        // BLOGS PAGE - CAROUSEL SYSTEM
+        // ================================
+
+        class BlogCarousel {
+            constructor() {
+                this.carousels = new Map();
+                this.init();
+            }
+
+            init() {
+                const carouselContainers = document.querySelectorAll('.blog-carousel-container');
+                
+                carouselContainers.forEach((container) => {
+                    this.setupCarousel(container);
+                });
+
+                this.setupNavButtons();
+            }
+
+            setupCarousel(container) {
+                const track = container.querySelector('.carousel-track');
+                const slides = container.querySelectorAll('.blog-carousel-slide');
+                
+                if (!track || slides.length === 0) return;
+
+                // Use the data-carousel attribute from the button to link to the container class
+                // or a random ID if using multiple of the same type
+                const carouselId = Math.random().toString(36).substr(2, 9);
+                
+                this.carousels.set(carouselId, {
+                    container: container,
+                    track: track,
+                    currentIndex: 0,
+                    slides: slides,
+                    slideWidth: 0,
+                    gap: 0,
+                    isAnimating: false
+                });
+
+                // Initial setup and button check
+                setTimeout(() => {
+                    this.updateSlideDimensions(carouselId);
+                }, 100);
+                
+                window.addEventListener('resize', () => this.updateSlideDimensions(carouselId));
+            }
+
+            updateSlideDimensions(carouselId) {
+                const carousel = this.carousels.get(carouselId);
+                if (!carousel) return;
+
+                const firstSlide = carousel.slides[0];
+                const computedStyle = window.getComputedStyle(carousel.track);
+                carousel.gap = parseFloat(computedStyle.gap) || 24;
+                carousel.slideWidth = firstSlide.offsetWidth;
+
+                this.checkNavButtons(carouselId);
+            }
+
+            checkNavButtons(carouselId) {
+                const carousel = this.carousels.get(carouselId);
+                if (!carousel) return;
+
+                // Find buttons related to this specific container
+                const containerClass = Array.from(carousel.container.classList).find(c => c.endsWith('-carousel'));
+                const prevBtn = document.querySelector(`.carousel-prev[data-carousel="${containerClass}"]`);
+                const nextBtn = document.querySelector(`.carousel-next[data-carousel="${containerClass}"]`);
+
+                if (!prevBtn || !nextBtn) return;
+
+                const containerWidth = carousel.container.offsetWidth;
+                const totalWidth = carousel.track.scrollWidth;
+                const currentOffset = Math.abs(carousel.currentIndex * (carousel.slideWidth + carousel.gap));
+
+                // 1. Hide both if content is smaller than container
+                if (totalWidth <= containerWidth) {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                    return;
+                }
+
+                // 2. Logic for Prev Button (Hide if at start)
+                prevBtn.style.display = carousel.currentIndex === 0 ? 'none' : 'flex';
+
+                // 3. Logic for Next Button (Hide if no more content to the right)
+                // We check if the current offset + container width is >= total track width
+                const remainingSpace = totalWidth - (currentOffset + containerWidth);
+                nextBtn.style.display = remainingSpace <= 1 ? 'none' : 'flex'; 
+            }
+
+            setupNavButtons() {
+                document.querySelectorAll('.blog-carousel-nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const btnElement = e.currentTarget;
+                        const carouselName = btnElement.dataset.carousel;
+                        const direction = btnElement.classList.contains('carousel-next') ? 1 : -1;
+
+                        this.carousels.forEach((carousel, id) => {
+                            if (carousel.container.classList.contains(carouselName)) {
+                                this.slideCarousel(id, direction);
+                            }
+                        });
+                    });
+                });
+            }
+
+            slideCarousel(carouselId, direction) {
+                const carousel = this.carousels.get(carouselId);
+                if (!carousel || carousel.isAnimating) return;
+
+                const containerWidth = carousel.container.offsetWidth;
+                const totalWidth = carousel.track.scrollWidth;
+                const step = carousel.slideWidth + carousel.gap;
+                
+                // Calculate the maximum index that doesn't show empty space at the end
+                const maxScroll = totalWidth - containerWidth;
+                const maxIndex = Math.ceil(maxScroll / step);
+
+                let newIndex = carousel.currentIndex + direction;
+
+                // Stop movement if out of bounds (No looping)
+                if (newIndex < 0) newIndex = 0;
+                if (newIndex > maxIndex) newIndex = maxIndex;
+                
+                // If the index hasn't actually changed, don't animate
+                if (newIndex === carousel.currentIndex) return;
+
+                carousel.isAnimating = true;
+                carousel.currentIndex = newIndex;
+
+                // Calculate offset but ensure we don't scroll past the content
+                let offset = -(carousel.currentIndex * step);
+                if (Math.abs(offset) > maxScroll) {
+                    offset = -maxScroll;
+                }
+
+                carousel.track.style.transform = `translateX(${offset}px)`;
+
+                setTimeout(() => {
+                    carousel.isAnimating = false;
+                    this.checkNavButtons(carouselId);
+                }, 600);
+            }
+        }
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlogCarousel();
+        });
+
+        // ================================
+        // SMOOTH SCROLL BEHAVIOR
+        // ================================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // ================================
+        // KEYBOARD NAVIGATION
+        // ================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                const activeCarousel = document.activeElement?.closest('.blog-carousel-nav-btn');
+                if (activeCarousel) {
+                    activeCarousel.click();
+                }
+            } else if (e.key === 'ArrowRight') {
+                const activeCarousel = document.activeElement?.closest('.blog-carousel-nav-btn');
+                if (activeCarousel) {
+                    activeCarousel.click();
+                }
+            }
+        });
+
+        // ================================
+        // LOADING COUNTRIES IN BOOKING FORM
+        // ================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // List of all countries
+            const countries = [
+                "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia",
+                "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin",
+                "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso",
+                "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China",
+                "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)", "Costa Rica", "Croatia", "Cuba", "Cyprus",
+                "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador",
+                "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon",
+                "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+                "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
+                "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos",
+                "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar",
+                "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico",
+                "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia",
+                "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
+                "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay",
+                "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
+                "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe",
+                "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
+                "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan",
+                "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste",
+                "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
+                "United Arab Emirates", "United Kingdom", "United States of America", "Uruguay", "Uzbekistan", "Vanuatu",
+                "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+            ];
+
+            const countrySelect = document.getElementById('country');
+
+            // Populate the dropdown with countries
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countrySelect.appendChild(option);
+            });
+
+            // Initialize the Select2 library for a searchable dropdown.
+            // This function converts the standard <select> into a dynamic
+            // input field with a dropdown that drops downwards, which is
+            // the default behavior.
+            $(document).ready(function() {
+                $('#country').select2({
+                    placeholder: "Select your country",
+                    allowClear: true
+                });
+            });
+        });
+    </script>
+
+    <style>
+        /* Tour Policies Section */
+        .tour-policies-section {
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+
+        .info-accordion {
+            border: 1.5px solid #000;
+            overflow: hidden;
+        }
+
+        .info-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .info-header h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .info-body {
+            padding: 0 20px 20px 20px;
+        }
+
+        .policy-list {
+            padding-left: 40px;
+            margin: 0;
+        }
+
+        .policy-list li {
+            position: relative;
+            font-size: 15px;
+        }
+
+        .supplier-link {
+            color: #000;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        /* Cards */
+        .policy-card {
+            border: 1px solid #e0e0e0;
+            padding: 25px;
+            background: #fff;
+        }
+
+        .policy-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .policy-card p {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .product-code {
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        /* Buttons */
+        .btn-show-more, .btn-help-center {
+            display: inline-block;
+            padding: 10px 20px;
+            border: 1.5px solid #000;
+            background: transparent;
+            font-weight: 600;
+            color: #000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-show-more:hover, .btn-help-center:hover {
+            background: #f5f5f5;
+            text-decoration: none;
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .info-header h3 { font-size: 20px; }
+        }
+    </style>

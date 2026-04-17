@@ -1,0 +1,54 @@
+<div class="dashboard-content">
+    <form id="addPartnerForm" action="/partners/dashboard/add" method="POST" enctype="multipart/form-data">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Partner Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="font-weight-bold">Partner Name</label>
+                    <input type="text" name="name" class="form-control" required placeholder="e.g., Kenya Wildlife Service">
+                </div>
+
+                <div class="form-group">
+                    <label class="font-weight-bold">Website URL</label>
+                    <input type="url" name="url" class="form-control" placeholder="https://example.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="font-weight-bold">Partner Logo</label>
+                    <div class="custom-file-upload">
+                        <input type="file" id="partnerLogo" name="logo" accept="image/*" class="d-none">
+                        <div id="logoBox" class="border p-4 text-center rounded" style="cursor: pointer; border-style: dashed !important;">
+                            <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-primary"></i>
+                            <p class="mb-0">Click to upload partner logo</p>
+                        </div>
+                        <div id="logoPreview" class="mt-3 text-center"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary px-5">Save Partner</button>
+                <a href="/partners/dashboard" class="btn btn-link">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    const logoInput = document.getElementById('partnerLogo');
+    const logoBox = document.getElementById('logoBox');
+    const logoPreview = document.getElementById('logoPreview');
+
+    logoBox.addEventListener('click', () => logoInput.click());
+
+    logoInput.addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (ex) => {
+                logoPreview.innerHTML = `<img src="${ex.target.result}" style="max-height: 150px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">`;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+</script>

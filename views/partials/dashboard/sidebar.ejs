@@ -43,7 +43,7 @@
 
             <li class="nav-item <%= title.includes('Destinations') ? 'active' : '' %>">
                 <a href="/destinations/dashboard/destinations" class="nav-link">
-                    <i class="fas fa-globe-africa"></i>
+                    <i class="fas fa-map-marked-alt"></i>
                     <span>Destinations</span>
                 </a>
             </li>
@@ -65,6 +65,20 @@
             </li>
 
             <% if (user.role === 'admin') { %>
+            <li class="nav-item <%= title.includes('Hero') || title.includes('Slides') ? 'active' : '' %>">
+                <a href="/hero-slides/dashboard" class="nav-link">
+                    <i class="fas fa-images"></i>
+                    <span>Hero Slides</span>
+                </a>
+            </li>
+
+            <li class="nav-item <%= title.includes('Partners') ? 'active' : '' %>">
+                <a href="/partners/dashboard" class="nav-link">
+                    <i class="fas fa-handshake"></i>
+                    <span>Partners</span>
+                </a>
+            </li>
+
             <li class="nav-item <%= title.includes('Reviews') ? 'active' : '' %>">
                 <a href="/reviews/dashboard" class="nav-link">
                     <i class="fas fa-star"></i>
@@ -85,8 +99,6 @@
                     <span>Subscribers</span>
                 </a>
             </li>
-
-            
             <% } %>
 
             <li class="nav-item <%= title.includes('Agents') ? 'active' : '' %>">

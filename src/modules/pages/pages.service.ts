@@ -110,34 +110,29 @@ export class PagesService {
   }
 
   async update(id: string, updatePageDto: UpdatePageDto, userId: string): Promise<Page> {
-    if (!Types.ObjectId.isValid(id)) { // Basic validation for ObjectId
-        throw new BadRequestException('Invalid ID format');
-    }
+  if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid ID');
 
-    // Check if updating to a slug that already exists for a different page
-    if (updatePageDto.slug) {
-      const existingPage = await this.pageModel.findOne({
-        slug: updatePageDto.slug,
-        _id: { $ne: id }, // Exclude the current page
-      });
-
-      if (existingPage) {
-        throw new ConflictException("Page with this slug already exists");
-      }
-    }
-
-    const page = await this.pageModel.findById(id).exec();
-
-    if (!page) {
-      throw new NotFoundException(`Page with ID ${id} not found`);
-    }
-
-    // Directly assign DTO properties
-    Object.assign(page, updatePageDto);
-    page.updatedBy = new Types.ObjectId(userId) as any;
-
-    return page.save();
+  // Handle slug updates
+  if (updatePageDto.slug) {
+    const conflict = await this.pageModel.findOne({ slug: updatePageDto.slug, _id: { $ne: id } });
+    if (conflict) throw new ConflictException("Slug already exists");
   }
+
+  // Use $set to ensure nested objects and arrays are overwritten correctly
+  const result = await this.pageModel.findByIdAndUpdate(
+    id,
+    { 
+      $set: { 
+        ...updatePageDto, 
+        updatedBy: new Types.ObjectId(userId) 
+      } 
+    },
+    { new: true, runValidators: true }
+  ).exec();
+
+  if (!result) throw new NotFoundException("Page not found");
+  return result;
+}
 
   async remove(id: string): Promise<Page> {
     if (!Types.ObjectId.isValid(id)) { // Basic validation for ObjectId
@@ -201,4 +196,12 @@ export class PagesService {
 
     return updatedPage;
   }
+
+  async searchForBlogs(q: string) {
+    return this.pageModel
+        .find({ title: { $regex: q, $options: 'i' } })
+        .select('title _id')
+        .limit(10)
+        .exec();
+}
 }

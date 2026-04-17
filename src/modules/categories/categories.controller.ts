@@ -16,11 +16,14 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   HttpException, // Import HttpException
   HttpStatus, // Import HttpStatus
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor, FileFieldsInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -121,8 +124,16 @@ export class CategoriesController {
 
   @Post("dashboard/add")
   @UseInterceptors(
-    FileInterceptor("image") // 'image' is the name attribute of your file input
-  )
+    FileInterceptor("image", { // Changed to FileInterceptor for a single file
+      storage: diskStorage({
+        destination: './public/uploads/categories',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    })
+  ) 
   async addCategory(
     @Body(ValidationPipe) createCategoryDto: CreateCategoryDto,
     @UploadedFile() file: Express.Multer.File,
@@ -243,9 +254,17 @@ export class CategoriesController {
   // Changed to PATCH for RESTful design (for partial updates)
   @Patch("dashboard/edit/:id")
   @UseInterceptors(
-
-    FileInterceptor("image")
+    FileInterceptor("image", { // Changed to FileInterceptor
+      storage: diskStorage({
+        destination: './public/uploads/categories',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    })
   )
+
   async updateCategory(
     @Param("id") id: string,
     @Body(ValidationPipe) updateCategoryDto: UpdateCategoryDto,
@@ -403,5 +422,24 @@ export class CategoriesController {
       req.flash("error_msg", errorMessage);
       return res.redirect("/categories/dashboard"); // <--- REDIRECT ON ERROR AS WELL
     }
+  }
+
+  @Get('api/by-countries')
+  async getCategoriesByCountries(@Query('ids') ids: string) {
+    if (!ids || ids === '') return [];
+    const countryIds = ids.split(',');
+    
+    // Using your service's findAll method
+    const result = await this.categoriesService.findAll({ 
+      countryId: countryIds[0] 
+    });
+    return result.data; 
+  }
+
+  // THIS IS THE ONE THE AJAX USES
+  @Get('api/by-country/:countryId')
+  async getByCountry(@Param('countryId') countryId: string) {
+    // Ensure this method exists in your CategoriesService
+    return await this.categoriesService.findByCountry(countryId);
   }
 }

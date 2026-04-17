@@ -1,124 +1,170 @@
+<!-- TOP SUBNAVBAR - Contact Info, Greeting, Language Toggle -->
+    <div class="top-subnavbar" id="topSubnavbar">
+        <div class="container-fluid">
+            <div class="row align-items-center h-80 g-0">
+                <!-- Contact Details -->
+                <div class="col-md-8 contact-section">
+                    <div class="contact-info d-flex align-items-center flex-wrap">
+                        <span class="greeting-message" id="greetingMessage">Good Morning</span>
+                        <span class="contact-separator">|</span>
+                        <a href="mailto:info@feelafricasafaris.com" class="contact-link">
+                            <i class="fas fa-envelope"></i> info@feelafricasafaris.com
+                        </a>
+                        <span class="contact-separator">|</span>
+                        <a href="tel:0765706766" class="contact-link">
+                            <i class="fas fa-phone"></i> +256765706766
+                        </a>
+                        <span class="contact-separator">|</span>
+                        <a href="https://wa.me/254740384876" class="contact-link" target="_blank">
+                            <i class="fab fa-whatsapp"></i> +256740384876
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Language Toggle -->
+                <div class="col-md-4 language-section text-end">
+                    <div class="dropdown-container">
+                        <button class="btn-language" id="languageBtn">
+                            <i class="fas fa-globe"></i>
+                            <span id="currentLanguage">English</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="language-dropdown" id="languageDropdown">
+                            <button class="language-option" data-lang="en">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/4.1.7/flags/4x3/gb.svg" alt="English"> English
+                            </button>
+                            <button class="language-option" data-lang="fr">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/4.1.7/flags/4x3/fr.svg" alt="Français"> Français
+                            </button>
+                            <button class="language-option" data-lang="de">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/4.1.7/flags/4x3/de.svg" alt="Deutsch"> Deutsch
+                            </button>
+                            <button class="language-option" data-lang="es">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/4.1.7/flags/4x3/es.svg" alt="Español"> Español
+                            </button>
+                            <button class="language-option" data-lang="sw">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/4.1.7/flags/4x3/tz.svg" alt="Kiswahili"> Kiswahili
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <header class="header">
     <nav class="nav nav-container">
         <div class="nav__data">
-           <a href="/" class="nav__logo">
-            <img src="/img/roads_of_adventure_logo.png"  height="70px" alt="Feel Africa Safaris logo">
-           </a>
+            <a href="/" class="nav__logo">
+                <img src="/img/feel_africa_safaris_logo.png" width="80px" alt="Feel Africa Safaris logo">
+            </a>
 
-           <div class="enquiry-small row">
-            <a href="/enquiry"><button>Enquiry</button></a>
-           
-           <div class="nav__toggle" id="nav-toggle">
-             <i class="ri-menu-line nav__burger"></i>
-             <i class="ri-close-line nav__close"></i>
-           </div>
-           </div>
+            <div class="enquiry-small">
+                <div><a href="/enquiry" class="btn-enquiry">Enquiry</a></div>
+                <div class="nav__toggle" id="nav-toggle">
+                    <i class="ri-menu-line nav__burger"></i>
+                    <i class="ri-close-line nav__close"></i>
+                </div>
+            </div>
         </div>
 
         <div class="nav__menu" id="nav-menu">
-           <ul class="nav__list">
-             <li><a href="/" class="nav__link">Home</a></li>
+            <ul class="nav__list">
+                <li><a href="/" class="nav__link">Home</a></li>
 
-             <%
-             // Ensure headerStaticCountries exists and is an array before iterating
-             if (typeof headerStaticCountries !== 'undefined' && Array.isArray(headerStaticCountries)) {
-               headerStaticCountries.forEach(country => {
-                 // The 'fi fi-ug' class needs to be dynamic based on country code
-                 // Assuming country.code is something like 'ug', 'ke', 'tz', 'rw'
-                 // You might need to store ISO 2-letter codes in your DB for this.
-             %>
-               <li><a href="/countries/<%= country.slug %>" class="nav__link">
-                 <span class="fi fi-<%= country.code %>"></span> <%= country.name %>
-               </a></li>
-             <%
-               });
-             } else {
-               // Fallback if static countries are not loaded
-             %>
-               <li><a href="/countries/uganda" class="nav__link"><span class="fi fi-ug"></span> Uganda</a></li>
-               <li><a href="/countries/kenya" class="nav__link"><span class="fi fi-ke"></span> Kenya</a></li>
-               <li><a href="/countries/tanzania" class="nav__link"><span class="fi fi-tz"></span> Tanzania</a></li>
-               <li><a href="/countries/rwanda" class="nav__link"><span class="fi fi-rw"></span> Rwanda</a></li>
-             <%
-             }
-             %>
+                <% if (typeof headerStaticCountries !== 'undefined' && headerStaticCountries.length > 0) { %>
+                    <% headerStaticCountries.forEach(country => { %>
+                        <li>
+                            <a href="/countries/<%= country.slug %>" class="nav__link">
+                                <span class="fi fi-<%= country.code %>"></span> <%= country.name %>
+                            </a>
+                        </li>
+                    <% }); %>
+                <% } %>
 
-             <li class="dropdown__item">
-                 <div class="nav__link">
-                   More destinations<i class="ri-arrow-down-s-line dropdown__arrow"></i>
-                 </div>
+                <li class="dropdown__item">
+                    <div class="nav__link">
+                        Other Countries <i class="ri-arrow-down-s-line dropdown__arrow"></i>
+                    </div>
+                    <ul class="dropdown__menu">
+                        <% if (typeof headerOtherCountries !== 'undefined' && headerOtherCountries.length > 0) { %>
+                            <% headerOtherCountries.forEach(country => { %>
+                                <li>
+                                    <a href="/countries/<%= country.slug %>" class="dropdown__link">
+                                        <span class="fi fi-<%= country.code %>"></span> <%= country.name %>
+                                    </a>
+                                </li>
+                            <% }); %>
+                        <% } else { %>
+                            <li><a href="#" class="dropdown__link">More coming soon</a></li>
+                        <% } %>
+                    </ul>
+                </li>
 
-                 <ul class="dropdown__menu">
-                   <%
-                   // Ensure headerOtherCountries exists and is an array before iterating
-                   if (typeof headerOtherCountries !== 'undefined' && Array.isArray(headerOtherCountries) && headerOtherCountries.length > 0) {
-                     headerOtherCountries.forEach(country => {
-                   %>
-                       <li>
-                           <a href="/countries/<%= country.slug %>" class="dropdown__link">
-                             <span class="fi fi-<%= country.code %>"></span> <%= country.name %>
-                           </a>
-                       </li>
-                   <%
-                     });
-                   } else {
-                   %>
-                     <li><a href="#" class="dropdown__link disabled">No other destinations available</a></li>
-                   <%
-                   }
-                   %>
-                 </ul>
-             </li>
-             
-             <li><a href="/impact" class="nav__link">Impacts</a></li>
-             <li><a href="/enquiry" class="nav__link"><button>Enquiry</button></a></li>
-           </ul>
+                <li class="dropdown__item">
+                    <div class="nav__link">
+                        Destinations <i class="ri-arrow-down-s-line dropdown__arrow"></i>
+                    </div>
+                    <ul class="dropdown__menu">
+                        <% if (typeof allDestinations !== 'undefined' && allDestinations.length > 0) { %>
+                            <% allDestinations.forEach(dest => { %>
+                                <li><a href="/destinations/<%= dest.slug %>" class="dropdown__link"><%= dest.name %></a></li>
+                            <% }); %>
+                        <% } else { %>
+                            <li><a href="#" class="dropdown__link">Exploring...</a></li>
+                        <% } %>
+                    </ul>
+                </li>
 
-           <div class="nav_grid">
-             <div class="nav_destinations">
-                 <h3>Destinations</h3>
-                 <ul class="nav_list_grid">
-                   <%
-                   // For the grid, you might want to combine both static and other countries, or just render all
-                   // For simplicity, let's render all countries from both lists for the grid, avoiding duplicates if any.
-                   // A better approach would be to get ALL countries for the grid directly from DB,
-                   // but for now, we'll combine the two lists.
-                   const allHeaderCountries = [];
-                   if (typeof headerStaticCountries !== 'undefined') {
-                       allHeaderCountries.push(...headerStaticCountries);
-                   }
-                   if (typeof headerOtherCountries !== 'undefined') {
-                       allHeaderCountries.push(...headerOtherCountries);
-                   }
-                   // Remove duplicates based on slug if necessary (though findStatic/findOther should prevent this)
-                   const uniqueAllHeaderCountries = [...new Map(allHeaderCountries.map(item => [item.slug, item])).values()];
+                <li><a href="/about" class="nav__link">About</a></li>
+                <li><a href="/enquiry#quote"><button class="btn-enquiry">Enquiry</button></a></li>
+            </ul>
 
-                   if (uniqueAllHeaderCountries.length > 0) {
-                       uniqueAllHeaderCountries.forEach(country => {
-                   %>
-                       <li class="nav_grid_item"><a href="/countries/<%= country.slug %>">
-                         <span class="fi fi-<%= country.code %>"></span> <%= country.name %>
-                       </a></li>
-                   <%
-                       });
-                   } else {
-                   %>
-                     <li class="nav_grid_item">No destinations available.</li>
-                   <%
-                   }
-                   %>
-                 </ul>
-             </div>
-             <div class="nav_other_links">
-                 <h4>Other Links</h4>
-                 <ul class="nav_list_grid">
-                     <li class="nav_grid_item"><a href="/"><i class='bx bx-home'></i> Home</a></li>
-                     <li class="nav_grid_item"><a href="/impact"><i class='bx bx-universal-access'></i> Impacts</a></li>
-                     <li class="nav_grid_item"><a href="/enquiry"><i class='bx bx-phone'></i> Contact</a></li>
-                     <li class="nav_grid_item"><a href="/about"><i class='bx bx-info-circle'></i> About Us</a></li>
-                 </ul>
-             </div>
-           </div> 
+            <div class="nav_grid">
+                <div class="nav_countries">
+                    <h3>Countries</h3>
+                    <ul class="nav_list_grid">
+                        <% 
+                        // Combine both arrays for the full grid view
+                        const fullCountryList = [...(headerStaticCountries || []), ...(headerOtherCountries || [])];
+                        fullCountryList.forEach(country => { 
+                        %>
+                            <li class="nav_grid_item">
+                                <a href="/countries/<%= country.slug %>">
+                                    <span class="fi fi-<%= country.code %>"></span> <%= country.name %>
+                                </a>
+                            </li>
+                        <% }); %>
+                    </ul>
+                </div>
+                
+                <div class="nav_destinations">
+                    <ul>
+                        <li>
+                            <h3 class="destination-list-toggle">Destinations <i class="ri-arrow-down-s-line nav__row__arrow"></i></h3>
+                            <ul class="nav_list_row">
+                                <% if (typeof allDestinations !== 'undefined') { %>
+                                    <% allDestinations.forEach(dest => { %>
+                                        <li>
+                                            <i class="ri-arrow-right-s-line"></i>
+                                            <a href="/destinations/<%= dest.slug %>" class="nav_row_item"><%= dest.name %></a>
+                                        </li>
+                                    <% }); %>
+                                <% } %>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav_other_links">
+                    <h3>Useful Links</h3>
+                    <ul class="nav_list_grid">
+                        <li class="nav_grid_item"><a href="/"><i class='bx bx-home'></i> Home</a></li>
+                        <li class="nav_grid_item"><a href="/about"><i class='bx bx-info-circle'></i> About Us</a></li>
+                        <li class="nav_grid_item"><a href="/impact"><i class='bx bx-leaf'></i> Our Impact</a></li>
+                    </ul>
+                </div>
+            </div> 
         </div>
-     </nav>
+    </nav>
 </header>

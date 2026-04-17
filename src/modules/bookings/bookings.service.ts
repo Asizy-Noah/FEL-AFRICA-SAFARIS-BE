@@ -137,4 +137,13 @@ export class BookingsService {
     booking.updatedBy = new Types.ObjectId(userId)
     return booking.save()
   }
+
+  async sendQuoteNotification(formData: any) {
+  try {
+    await this.mailService.sendQuoteRequestNotification(formData);
+  } catch (error) {
+    console.error("Mail failed but booking was saved:", error);
+    // We don't throw here so the user still gets a success message for the DB save
+  }
+}
 }

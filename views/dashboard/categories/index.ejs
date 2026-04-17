@@ -38,42 +38,48 @@
     <% } %>
 
     <div class="categories-grid">
-        <% if (categories && categories.length > 0) { %>
-            <% categories.forEach(category => { %>
-                <div class="category-card" data-id="<%= category._id %>">
-                    <div class="category-image">
-                        <% if (category.image) { %>
-                            <img src="<%= category.image %>" alt="<%= category.name %>">
-                        <% } else { %>
-                            <img src="/img/placeholder.jpg" alt="No Image"> <% } %>
-                    </div>
-                    <div class="category-content">
-                        <h3 class="category-title"><%= category.name %></h3>
-                        <% if (category.country) { %>
-                            <p class="category-country">Country: <%= category.country.name %></p>
-                        <% } else { %>
-                            <p class="category-country">Country: All Countries</p>
-                        <% } %>
-                    </div>
-                    <div class="category-actions">
-                        <a href="/categories/dashboard/edit/<%= category._id %>" class="action-btn edit-btn">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form action="/categories/dashboard/delete/<%= category._id %>?_method=DELETE" method="POST">
-                            <button class="action-btn delete-btn">
-                            <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                        
-                    </div>
+    <% if (categories && categories.length > 0) { %>
+        <% categories.forEach(category => { %>
+            <div class="category-card" data-id="<%= category._id %>">
+                <div class="category-image">
+                    <% if (category.image) { %>
+                        <img src="<%= category.image %>" alt="<%= category.name %>">
+                    <% } else { %>
+                        <img src="/img/placeholder.jpg" alt="No Image"> 
+                    <% } %>
                 </div>
-            <% }) %>
-        <% } else { %>
-            <div class="col-12 text-center py-5">
-                <p>No categories found.</p>
+                <div class="category-content">
+                    <h3 class="category-title"><%= category.name %></h3>
+                    
+                    <%# UPDATED LOGIC FOR MULTIPLE COUNTRIES %>
+                    <p class="category-country">
+                        <strong>Country:</strong> 
+                        <% if (category.countries && category.countries.length > 0) { %>
+                            <%# Map through the array and join names with a comma %>
+                            <%= category.countries.map(c => c.name).join(', ') %>
+                        <% } else { %>
+                            All Countries
+                        <% } %>
+                    </p>
+                </div>
+                <div class="category-actions">
+                    <a href="/categories/dashboard/edit/<%= category._id %>" class="action-btn edit-btn">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form action="/categories/dashboard/delete/<%= category._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this category?')">
+                        <button class="action-btn delete-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
-        <% } %>
-    </div>
+        <% }) %>
+    <% } else { %>
+        <div class="col-12 text-center py-5">
+            <p>No categories found.</p>
+        </div>
+    <% } %>
+</div>
     
     <% if (pagination && pagination.totalPages > 1) { %>
         <div class="pagination">

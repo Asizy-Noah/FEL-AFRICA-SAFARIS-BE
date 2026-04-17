@@ -1278,3 +1278,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+/* ===Replace Image Logic */
+/* === Updated Image Logic === */
+document.addEventListener('DOMContentLoaded', () => {
+    const replaceToggle = document.getElementById('replaceImageCheckbox');
+    const uploadContainer = document.getElementById('uploadContainer');
+    const imageInput = document.getElementById('coverImageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const dropZone = document.getElementById('dropZone');
+
+    // 1. Handle Toggle logic
+    if (replaceToggle) {
+        replaceToggle.addEventListener('change', function() {
+            if (this.checked) {
+                uploadContainer.style.display = 'block';
+                uploadContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                uploadContainer.style.display = 'none';
+                imageInput.value = ''; 
+                imagePreview.innerHTML = ''; 
+            }
+        });
+    }
+
+    // 2. MAKE THE BOX CLICKABLE (The missing link)
+    if (dropZone && imageInput) {
+        dropZone.addEventListener('click', () => {
+            imageInput.click(); // This opens the file browser when the box is clicked
+        });
+    }
+
+    // 3. Handle File Preview
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            imagePreview.innerHTML = ''; 
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.className = 'img-thumbnail mt-2';
+                    img.style.maxHeight = '200px';
+                    imagePreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // 4. Drag and Drop Support
+    if (dropZone) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('bg-light'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-light'), false);
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt.files && dt.files.length > 0) {
+                imageInput.files = dt.files;
+                imageInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+});

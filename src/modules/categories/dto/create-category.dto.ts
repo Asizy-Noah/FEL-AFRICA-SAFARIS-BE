@@ -1,6 +1,6 @@
 // src/modules/categories/dto/create-category.dto.ts
 
-import { IsNotEmpty, IsOptional, IsString, IsMongoId } from "class-validator"; // Add IsMongoId
+import { IsArray, IsNotEmpty, IsOptional, IsString, IsMongoId } from "class-validator"; // Add IsMongoId
 import { Transform } from 'class-transformer'; 
 
 export class CreateCategoryDto {
@@ -21,10 +21,15 @@ export class CreateCategoryDto {
   image?: string; // This will be the path to the uploaded image
 
   /// New field: Country ID
-  @Transform(({ value }) => (value === '' ? null : value)) // <--- ADD THIS LINE
   @IsOptional()
-  @IsMongoId()
-  country?: string | null; // Allow null as a valid type
+  @Transform(({ value }) => {
+    if (!value) return [];
+    // If it's a single string from the form, wrap it in an array
+    return Array.isArray(value) ? value : [value];
+  })
+  @IsArray()
+  @IsMongoId({ each: true }) // Validates every ID in the array
+  countries?: string[];
 
 
   // SEO Fields (add these to align with the form)

@@ -41,17 +41,15 @@ export class CategoriesService {
 
   /**
    * Finds all categories with optional search, pagination, and sorting, and countryId filtering.
-   * @param query An object containing search string, page number, limit, and countryId.
-   * @returns An object with paginated category data and pagination info.
    */
-  async findAll(query: { search?: string; page?: string; limit?: string; countryId?: string } = {}): Promise<{ // ADD countryId here
+  async findAll(query: { search?: string; page?: string; limit?: string; countryId?: string } = {}): Promise<{
     data: Category[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
   }> {
-    const { search, page = '1', limit = '6', countryId } = query; // Destructure countryId
+    const { search, page = '1', limit = '10', countryId } = query;
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
     const skip = (parsedPage - 1) * parsedLimit;
@@ -60,16 +58,19 @@ export class CategoriesService {
     if (search) {
       filter.$text = { $search: search };
     }
-    if (countryId && countryId !== "all") { // Add filtering by countryId
-      filter.country = countryId; // Assuming 'country' is the field in your Category schema
+    
+    // Updated to check if countryId exists within the countries array
+    if (countryId && countryId !== "all") {
+      filter.countries = new Types.ObjectId(countryId);
     }
 
     const [categories, total] = await Promise.all([
       this.categoryModel
         .find(filter)
-        .sort({ createdAt: 1 })
+        .sort({ createdAt: -1 }) // Sort by newest first
         .skip(skip)
         .limit(parsedLimit)
+        .populate("countries", "name slug") // Populate the array of countries
         .populate("createdBy", "name email")
         .exec(),
       this.categoryModel.countDocuments(filter).exec(),
@@ -87,7 +88,16 @@ export class CategoriesService {
   }
 
   async findOne(id: string): Promise<Category> {
-    const category = await this.categoryModel.findById(id).populate("createdBy", "name email").exec();
+    // Check if ID is valid to prevent Mongoose casting errors
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException(`Invalid ID format: ${id}`);
+    }
+
+    const category = await this.categoryModel
+      .findById(id)
+      .populate("countries", "name slug") // Populate countries for the Edit form tags
+      .populate("createdBy", "name email")
+      .exec();
 
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found.`);
@@ -99,8 +109,7 @@ export class CategoriesService {
   async findBySlug(slug: string): Promise<Category | null> {
     return this.categoryModel
       .findOne({ slug })
-      .sort({ time: 1 })
-      .populate('country', 'name slug code') // <--- ADD THIS POPULATE LINE
+      .populate('countries', 'name slug code') // Updated from 'country' to 'countries'
       .exec();
   }
 
@@ -121,7 +130,12 @@ export class CategoriesService {
     }
 
     const updatedCategory = await this.categoryModel
-      .findByIdAndUpdate(id, { ...updateCategoryDto, updatedBy: userId }, { new: true })
+      .findByIdAndUpdate(
+        id, 
+        { ...updateCategoryDto, updatedBy: userId }, 
+        { new: true }
+      )
+      .populate("countries", "name slug")
       .exec();
 
     if (!updatedCategory) {
@@ -143,31 +157,41 @@ export class CategoriesService {
 
   /**
    * Finds all categories associated with a given country ID.
-   * @param countryId The ID of the country to filter categories by.
-   * @returns A promise that resolves to an array of Category documents.
    */
   async findByCountry(countryId: string): Promise<Category[]> {
-    // --- IMPORTANT: Validate countryId is a valid ObjectId format first ---
     if (!Types.ObjectId.isValid(countryId)) {
-      
       throw new NotFoundException(`Invalid country ID format: ${countryId}`);
     }
 
     try {
-      
       const categories = await this.categoryModel
-        // <<< CRITICAL CORRECTION: Use only one .find() with new Types.ObjectId()
-        .find({ country: new Types.ObjectId(countryId) })
-        .populate('country', 'name slug') // Populate country details if needed
-        .select('name slug image') // Only select necessary fields (name and slug for dropdown)
+        // Using $in to find categories where the provided ID exists in the countries array
+        .find({ countries: { $in: [new Types.ObjectId(countryId)] } })
+        .populate('countries', 'name slug')
+        .select('name slug image description')
         .sort({ createdAt: 1 }) 
         .exec(); 
 
-      
       return categories;
     } catch (error) {
       console.error(`[CategoriesService] Error retrieving categories for country ID ${countryId}:`, error);
       throw new NotFoundException(`Could not retrieve categories for country ID: ${countryId}`);
     }
   }
+
+  async findByCountries(countryIds: string[]): Promise<Category[]> {
+  return this.categoryModel
+    .find({ countries: { $in: countryIds } }) // Use 'countries' if it's an array in schema
+    .sort({ name: 1 })
+    .exec();
+}
+
+
+async searchForBlogs(q: string) {
+    return this.categoryModel // or this.categoryModel, etc.
+        .find({ name: { $regex: q, $options: 'i' } })
+        .select('name _id')
+        .limit(10)
+        .exec();
+}
 }

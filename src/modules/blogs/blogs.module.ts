@@ -8,7 +8,9 @@ import { SubscribersModule } from "../subscribers/subscribers.module"
 import { CountriesModule } from "../countries/countries.module" // <--- ADD THIS IMPORT
 import { CategoriesModule } from "../categories/categories.module" // <--- ADD THIS IMPORT
 import { ToursModule } from '../tours/tours.module';
+import { DestinationsModule } from "../destinations/destinations.module"
 import { LocalStorageService } from '../google-cloud/local-storage.service';
+import { PagesModule } from "../pages/pages.module"
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { LocalStorageService } from '../google-cloud/local-storage.service';
     CountriesModule, // <--- ADD CountriesModule here
     CategoriesModule,
     ToursModule, // <--- ADD CategoriesModule here
+    DestinationsModule, // Ensure this is here
+    PagesModule,
   ],
   controllers: [BlogsController],
   providers: [BlogsService, LocalStorageService,],

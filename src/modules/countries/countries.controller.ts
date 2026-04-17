@@ -8,6 +8,8 @@ import {
   Delete,
   Body,
   Param,
+  UsePipes,
+  ValidationPipe,
   UseGuards,
   Req,
   Res,
@@ -24,9 +26,11 @@ import {
   FileFieldsInterceptor,
 } from "@nestjs/platform-express"; // Keep for Multer, but no specific disk storage needed now
 import { Response } from "express";
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { CountriesService } from "./countries.service";
-import type { CreateCountryDto } from "./dto/create-country.dto";
-import type { UpdateCountryDto } from "./dto/update-country.dto";
+import { CreateCountryDto } from "./dto/create-country.dto";
+import { UpdateCountryDto } from "./dto/update-country.dto";
 import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -34,6 +38,7 @@ import { UserRole } from "../users/schemas/user.schema";
 
 import { ToursService } from "../tours/tours.service";
 import { CategoriesService } from "../categories/categories.service";
+import { DestinationsService } from "../destinations/destinations.service";
 import { LocalStorageService } from "../google-cloud/local-storage.service";
 
 @Controller("countries")
@@ -42,6 +47,7 @@ export class CountriesController {
     private readonly countriesService: CountriesService,
     private readonly categoriesService: CategoriesService,
     private readonly toursService: ToursService,
+    private readonly destinationsService: DestinationsService,
     private readonly localStorageService: LocalStorageService
   ) {}
 
@@ -58,47 +64,64 @@ export class CountriesController {
   }
 
   @Get(":slug")
-  @Render("public/countries/show")
-  async getCountry(
-    @Param("slug") slug: string,
-    @Req() req: any,
-    @Res({ passthrough: true }) res: Response
-  ) {
-    try {
-      const country = await this.countriesService.findBySlug(slug);
+@Render("public/countries/country")
+async getCountry(
+  @Param("slug") slug: string,
+  @Req() req: any,
+  @Res({ passthrough: true }) res: Response
+) {
+  try {
+    // 1. Fetch the Country base data
+    const countryDoc = await this.countriesService.findBySlug(slug);
 
-      if (!country) {
-          throw new HttpException('Country not found', HttpStatus.NOT_FOUND);
-      }
-
-      const categories = await this.categoriesService.findByCountry(
-        country._id.toString()
-      );
-      const tours = await this.toursService.findByCountry(
-        country._id.toString()
-      );
-
-      return {
-        title: `${country.name}`,
-        country,
-        categories,
-        tours,
-        layout: "layouts/public",
-        messages: req.flash(),
-        seo: {
-          title: country.seoTitle || `${country.name}`,
-          description: country.seoDescription || country.overview,
-          keywords: country.seoKeywords,
-          canonicalUrl: country.seoCanonicalUrl,
-          ogImage: country.seoOgImage || country.coverImage,
-        },
-      };
-    } catch (error) {
-      console.error(`Error loading country page for slug ${slug}:`, error);
-      req.flash("error_msg", error.message || "Country not found or an error occurred.");
-      return res.redirect("/");
+    if (!countryDoc) {
+        throw new HttpException('Country not found', HttpStatus.NOT_FOUND);
     }
+
+    // 2. Fetch all related data using the country's ID
+    const countryId = countryDoc._id.toString();
+
+    // Execute all queries in parallel for better performance
+    const [destinations, categories, tours] = await Promise.all([
+      this.destinationsService.findByCountryforCountryPage(countryId),
+      this.categoriesService.findByCountry(countryId),
+      this.toursService.findByCountry(countryId),
+    ]);
+
+    // 3. Prepare the data for the EJS template
+    // We convert the Mongoose document to a plain object and attach destinations
+    const country = {
+      ...countryDoc.toObject(),
+      destinations: destinations || []
+    };
+
+    return {
+      title: `${country.name}`,
+      country,
+      categories,
+      tours,
+      layout: "layouts/public",
+      messages: req.flash(),
+      seo: {
+        title: country.seoTitle || `${country.name}`,
+        description: country.seoDescription || country.overview,
+        keywords: country.seoKeywords,
+        canonicalUrl: country.seoCanonicalUrl,
+        ogImage: country.seoOgImage || country.coverImage,
+      },
+    };
+  } catch (error) {
+    console.error(`Error loading country page for slug ${slug}:`, error);
+    
+    // Handle the error and redirect
+    const errorMessage = error instanceof HttpException 
+      ? error.message 
+      : "An error occurred while loading the country page.";
+      
+    req.flash("error_msg", errorMessage);
+    return res.redirect("/");
   }
+}
 
   @Get("dashboard/countries")
   @UseGuards(SessionAuthGuard, RolesGuard)
@@ -152,7 +175,16 @@ export class CountriesController {
     FileFieldsInterceptor([
       { name: "coverImage", maxCount: 1 },
       { name: "galleryImages", maxCount: 10 },
-    ])
+    ], {
+      storage: diskStorage({
+        destination: './public/uploads/countries', // Ensure this folder exists!
+        filename: (req, file, cb) => {
+          // Generate a unique name: timestamp + random + extension
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    })
   )
   async addCountry(
     @Body() createCountryDto: CreateCountryDto,
@@ -264,7 +296,16 @@ export class CountriesController {
     FileFieldsInterceptor([
       { name: "coverImage", maxCount: 1 },
       { name: "galleryImages", maxCount: 10 },
-    ])
+    ], {
+      storage: diskStorage({
+        destination: './public/uploads/countries', // Ensure this folder exists!
+        filename: (req, file, cb) => {
+          // Generate a unique name: timestamp + random + extension
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    })
   )
   async updateCountry(
     @Param("id") id: string,
@@ -433,4 +474,10 @@ export class CountriesController {
       return res.redirect("/countries/dashboard/countries");
     }
   }
+
+  @Get('api/all')
+async getAll() {
+    // This calls your service to get all countries, usually sorted by name
+    return this.countriesService.findAll(); 
+} 
 }

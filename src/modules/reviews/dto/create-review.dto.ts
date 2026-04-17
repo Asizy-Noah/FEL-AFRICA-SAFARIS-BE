@@ -1,10 +1,15 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator"
+import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, IsDateString, IsUrl } from "class-validator"
 import { ReviewStatus } from "../schemas/review.schema"
+import { Type } from 'class-transformer';
 
 export class CreateReviewDto {
   @IsNotEmpty()
   @IsString()
-  name: string
+  title: string // Matches Schema
+
+  @IsNotEmpty()
+  @IsString()
+  clientName: string // Matches Schema (was 'name' in your old DTO)
 
   @IsNotEmpty()
   @IsEmail()
@@ -18,6 +23,7 @@ export class CreateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
+  @Type(() => Number)
   rating: number
 
   @IsNotEmpty()
@@ -26,7 +32,15 @@ export class CreateReviewDto {
 
   @IsOptional()
   @IsString()
-  avatar?: string
+  source?: string // E.g., 'google'
+
+  @IsNotEmpty()
+  @IsUrl()
+  externalLink: string
+
+  @IsNotEmpty()
+  @IsDateString()
+  reviewDate: Date
 
   @IsOptional()
   @IsEnum(ReviewStatus)
@@ -35,4 +49,8 @@ export class CreateReviewDto {
   @IsOptional()
   @IsString()
   tour?: string
+
+  @IsOptional()
+  @IsString()
+  response?: string
 }

@@ -1,0 +1,45 @@
+<div class="dashboard-content">
+    <form action="/hero-slides/dashboard/edit/<%= slide._id %>?_method=PATCH" method="POST" enctype="multipart/form-data">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label>Main Title</label>
+                        <input type="text" name="title" class="form-control" value="<%= slide.title %>" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Highlighted Title (End)</label>
+                        <input type="text" name="titleEnd" class="form-control" value="<%= slide.titleEnd %>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Caption/Subtitle</label>
+                    <textarea name="caption" class="form-control" rows="2"><%= slide.caption %></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" name="order" class="form-control" value="<%= slide.order %>">
+                </div>
+                <div class="form-group">
+                    <label>Change Background Image</label>
+                    <input type="file" name="photo" class="form-control-file" id="slidePhoto" accept="image/*">
+                    <div id="preview" class="mt-3">
+                        <img src="<%= slide.photo %>" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;">
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-info">Update Slide</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('slidePhoto').addEventListener('change', function(e) {
+        if(e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (ex) => { document.getElementById('preview').innerHTML = `<img src="${ex.target.result}" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;">`; };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+</script>

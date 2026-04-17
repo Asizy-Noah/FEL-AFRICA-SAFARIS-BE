@@ -21,6 +21,8 @@ import { SitemapModule } from './modules/sitemap/sitemap.module';
 import { DashboardModule } from "./modules/dashboard/dashboard.module"
 import { HeaderDataMiddleware } from './common/middleware/header-data.middleware'; 
 import { FooterDataMiddleware } from './common/middleware/footer-data.middleware';
+import { PartnersModule } from "./modules/partners/partners.module"
+import { HeroSlidesModule } from "./modules/hero-slide/hero-slides.module"
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,6 +55,8 @@ import { FooterDataMiddleware } from './common/middleware/footer-data.middleware
     MailModule,
     DashboardModule,
     SitemapModule,
+    PartnersModule,   
+    HeroSlidesModule,
   ], 
   controllers: [AppController],
   providers: [AppService],
@@ -60,17 +64,19 @@ import { FooterDataMiddleware } from './common/middleware/footer-data.middleware
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(HeaderDataMiddleware)
-      .forRoutes(
-        { path: '*', method: RequestMethod.GET }, // Apply to all GET requests
-        // You might refine this to only public-facing routes if dashboard routes don't need it
-        // e.g., { path: '/countries/*', method: RequestMethod.GET },
-        // { path: '/', method: RequestMethod.GET },
-        // { path: '/tours/*', method: RequestMethod.GET }, etc.
-      );
-
-      consumer
-      .apply(FooterDataMiddleware) // Apply the new footer middleware
-      .forRoutes('*'); // Apply to all routes
+      .apply(HeaderDataMiddleware, FooterDataMiddleware) // Apply both at once
+      .exclude(
+        // Do not run these lookups for Dashboard routes
+        { path: 'countries/dashboard/(.*)', method: RequestMethod.ALL },
+        { path: 'destinations/dashboard/(.*)', method: RequestMethod.ALL },
+        { path: 'partners/dashboard/(.*)', method: RequestMethod.ALL },
+        { path: 'hero-slides/dashboard/(.*)', method: RequestMethod.ALL },
+        { path: 'dashboard/(.*)', method: RequestMethod.ALL },
+        // Do not run for API calls
+        { path: 'api/(.*)', method: RequestMethod.ALL },
+        // Do not run for Auth (login/register)
+        { path: 'auth/(.*)', method: RequestMethod.ALL },
+      )
+      .forRoutes({ path: '*', method: RequestMethod.GET }); // Apply to all other public GET requests
   }
 }

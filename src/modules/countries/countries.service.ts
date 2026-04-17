@@ -197,4 +197,12 @@ export class CountriesService {
     .exec();
     return countries;
   }
+
+  async searchForBlogs(q: string) {
+    return this.countryModel // or this.categoryModel, etc.
+        .find({ name: { $regex: q, $options: 'i' } })
+        .select('name _id')
+        .limit(10)
+        .exec();
+}
 }

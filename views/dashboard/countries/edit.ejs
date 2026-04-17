@@ -75,37 +75,6 @@
                 <small class="form-text text-muted">Select an image to replace the current cover. If multiple are uploaded, the first will be used as cover.</small>
             </div>
 
-            <div class="form-group">
-                <label>Gallery Images</label>
-                <div class="current-gallery-images d-flex flex-wrap gap-2 mb-3">
-                    <% if (country.galleryImages && country.galleryImages.length > 0) { %>
-                        <% country.galleryImages.forEach(image => { %>
-                            <div class="gallery-item-wrapper position-relative" data-image-path="<%= image %>">
-                                <img src="<%= image %>" alt="Gallery Image" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
-                                <button type="button" class="remove-gallery-image-btn btn btn-sm btn-danger position-absolute top-0 end-0" title="Remove image">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        <% }) %>
-                    <% } else { %>
-                        <p class="text-muted">No gallery images currently.</p>
-                    <% } %>
-                </div>
-
-                <input type="hidden" name="removedGalleryImages" id="removedGalleryImages">
-
-                <div class="file-upload-container mt-3">
-                    <label for="newGalleryImagesInput" class="d-block">Upload Additional Gallery Images</label>
-                    <input type="file" id="newGalleryImagesInput" name="galleryImages" class="file-input" accept="image/*" multiple>
-                    <div class="file-upload-box">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Drag & drop images or click to browse</span>
-                    </div>
-                    <div class="file-preview" id="newGalleryImagesPreview"></div>
-                </div>
-                <small class="form-text text-muted">Add more images to the country gallery.</small>
-            </div>
-
         </div>
 
         <div class="form-section">

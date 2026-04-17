@@ -25,4 +25,10 @@ export class CategoriesApiController {
     const categories = await this.categoriesService.findByCountry(countryId);
     return { data: categories }; // Return categories in a 'data' property for consistency
   }
+
+  @Get('api/by-countries')
+async getByCountries(@Query('ids') ids: string) {
+    const countryIds = ids.split(',');
+    return this.categoriesService.findByCountries(countryIds);
+}
 }

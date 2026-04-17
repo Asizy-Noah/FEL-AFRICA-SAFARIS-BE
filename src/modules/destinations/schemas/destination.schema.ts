@@ -6,6 +6,10 @@ import type { Category } from "../../categories/schemas/category.schema";
 
 @Schema({ timestamps: true })
 export class Destination extends Document {
+
+  @Prop({ required: true, unique: true, trim: true })
+  slug: string;
+
   @Prop({ required: true })
   name: string;
 

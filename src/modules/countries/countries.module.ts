@@ -7,12 +7,15 @@ import { Country, CountrySchema } from "./schemas/country.schema";
 import { ToursModule } from "../tours/tours.module";
 import { CategoriesModule } from "../categories/categories.module";
 import { LocalStorageService } from "../google-cloud/local-storage.service";
+import { DestinationsModule } from "../destinations/destinations.module";
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Country.name, schema: CountrySchema }]),
     // No change here for ToursModule, it's correctly imported
     ToursModule,
+
+    DestinationsModule,
     // forwardRef here for CategoriesModule, as before
     forwardRef(() => CategoriesModule),
   ],

@@ -1,4 +1,4 @@
-import { Type } from "class-transformer";
+import { Type, Transform } from "class-transformer";
 import {
   IsArray,
   IsBoolean,
@@ -109,20 +109,22 @@ export class CreateTourDto {
   @IsNumber()
   discountPrice?: number; // Not in HTML form. Mark optional or remove.
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
-  groupSize?: number; // Not in HTML form. Mark optional or remove.
+  @Min(1)
+  @Type(() => Number)
+  groupSize: number; // Not in HTML form. Mark optional or remove.
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   galleryImages?: string[];
+  
+  @IsOptional()
+  @IsString()
+  additionalInfo?: string;
 
-    @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  destinations?: string[];
-
+  
   @IsOptional()
   @IsEnum(TourStatus)
   status?: TourStatus; // Not in HTML form. Mark optional or remove.
@@ -132,12 +134,22 @@ export class CreateTourDto {
   isFeatured?: boolean; // Not in HTML form. Mark optional or remove.
 
   @IsNotEmpty()
-  @IsString()
-  country: string; // Matches HTML 'country'
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value].filter(Boolean)))
+  countries: string[];
 
   @IsNotEmpty()
-  @IsString()
-  category: string; // Matches HTML 'category'
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value].filter(Boolean)))
+  categories: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value].filter(Boolean)))
+  destinations?: string[];
 
   @IsOptional()
   @IsString()

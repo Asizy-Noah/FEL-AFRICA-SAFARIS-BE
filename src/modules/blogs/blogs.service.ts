@@ -6,6 +6,9 @@ import type { CreateBlogDto } from "./dto/create-blog.dto";
 import type { UpdateBlogDto } from "./dto/update-blog.dto";
 import { MailService } from "../mail/mail.service";
 import { SubscribersService } from "../subscribers/subscribers.service";
+import { Tour } from '../tours/schemas/tour.schema'; // Adjust paths as needed
+import { Country } from '../countries/schemas/country.schema';
+import { Category } from '../categories/schemas/category.schema';
 
 // Define a more flexible type for the query options to allow Mongoose operators
 interface BlogFindAllOptions {
@@ -33,37 +36,46 @@ export class BlogsService {
     ) {}
 
     async create(createBlogDto: CreateBlogDto, userId: string): Promise<Blog> {
-        if (!createBlogDto.slug) {
-            createBlogDto.slug = createBlogDto.title
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .trim()
-                .replace(/\s+/g, '-');
-        }
-
-        const existingBlog = await this.blogModel.findOne({
-            $or: [{ title: createBlogDto.title }, { slug: createBlogDto.slug }],
-        });
-
-        if (existingBlog) {
-            throw new ConflictException("Blog with this title or slug already exists.");
-        }
-
-        const newBlog = new this.blogModel({
-            ...createBlogDto,
-            author: userId,
-            updatedBy: userId,
-        });
-
-        const savedBlog = await newBlog.save();
-
-        if (savedBlog.status === BlogStatus.VISIBLE) {
-            const subscribers = await this.subscribersService.findAll();
-            // await this.mailService.sendNewBlogNotification(savedBlog, subscribers);
-        }
-
-        return savedBlog;
+    // 1. Generate Slug if missing
+    if (!createBlogDto.slug) {
+        createBlogDto.slug = createBlogDto.title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
     }
+
+    // 2. Check for duplicates
+    const existingBlog = await this.blogModel.findOne({
+        $or: [{ title: createBlogDto.title }, { slug: createBlogDto.slug }],
+    });
+
+    if (existingBlog) {
+        // Append a random string to slug if it exists to prevent 400 errors
+        createBlogDto.slug = `${createBlogDto.slug}-${Math.floor(Math.random() * 1000)}`;
+    }
+
+    // 3. Save to Database
+    const newBlog = new this.blogModel({
+        ...createBlogDto,
+        author: userId,
+        updatedBy: userId,
+    });
+
+    const savedBlog = await newBlog.save();
+
+    // 4. Newsletter logic
+    if (savedBlog.status === BlogStatus.VISIBLE) {
+        try {
+            // const subscribers = await this.subscribersService.findAll();
+            // await this.mailService.sendNewBlogNotification(savedBlog, subscribers);
+        } catch (e) {
+            console.error("Mail Error:", e);
+        }
+    }
+
+    return savedBlog;
+}
 
     async findAll(queryOptions?: BlogFindAllOptions): Promise<{ blogs: Blog[]; totalBlogs: number; currentPage: number; totalPages: number }> {
         const filter: any = {};
@@ -136,7 +148,6 @@ export class BlogsService {
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
-                .populate("categories", "name slug")
                 .populate("author", "name email")
                 .exec(),
             this.blogModel.countDocuments(filter).exec(),
@@ -156,7 +167,6 @@ export class BlogsService {
         const query = this.blogModel
             .find({ status: BlogStatus.VISIBLE })
             .sort({ createdAt: -1 })
-            .populate("categories", "name slug")
             .populate("author", "name email");
 
         if (limit) {
@@ -166,27 +176,63 @@ export class BlogsService {
         return query.exec();
     }
 
-    async findOne(id: string): Promise<Blog> {
-        if (!Types.ObjectId.isValid(id)) {
-            throw new BadRequestException(`Invalid ID format for blog: ${id}`);
-        }
-        const blog = await this.blogModel
-            .findById(id)
-            .populate("categories", "name slug")
-            .populate("author", "name email")
-            .exec();
+    async findOne(id: string): Promise<any> {
+    const blog = await this.blogModel.findById(id).populate("author", "name email").lean().exec();
+    if (!blog) throw new NotFoundException(`Blog with ID ${id} not found.`);
+    if (!blog.sections || blog.sections.length === 0) return blog;
 
-        if (!blog) {
-            throw new NotFoundException(`Blog with ID ${id} not found.`);
+    for (const [index, section] of (blog.sections as any[]).entries()) {
+        if (section.attachedItems && section.attachedItems.length > 0) {
+            const hydratedItems = [];
+            for (const itemId of section.attachedItems) {
+                const actualId = typeof itemId === 'object' ? (itemId.id || itemId._id) : itemId;
+                const [tour, country, category, destination, page, linkedBlog] = await Promise.all([
+                    this.blogModel.db.model('Tour').findById(actualId).select('title').lean().exec(),
+                    this.blogModel.db.model('Country').findById(actualId).select('name').lean().exec(),
+                    this.blogModel.db.model('Category').findById(actualId).select('name').lean().exec(),
+                    this.blogModel.db.model('Destination').findById(actualId).select('name').lean().exec(),
+                    this.blogModel.db.model('Page').findById(actualId).select('title').lean().exec(),
+                    this.blogModel.findById(actualId).select('title').lean().exec(),
+                ]);
+
+                let detectedType = 'category'; 
+                if (tour) detectedType = 'tour';
+                else if (country) detectedType = 'country';
+                else if (destination) detectedType = 'destination';
+                else if (page) detectedType = 'page';
+                else if (linkedBlog) detectedType = 'blog';
+
+                const name = (tour as any)?.title || (page as any)?.title || (linkedBlog as any)?.title || (country as any)?.name || (category as any)?.name || (destination as any)?.name || "Unknown Item";
+                hydratedItems.push({ id: actualId, text: name, type: detectedType });
+            }
+            section.attachedItems = hydratedItems;
         }
 
-        return blog;
+        if (section.type === 'tour' || section.type === 'page') {
+            let itemIds = [];
+            if (section.referenceId) itemIds.push(section.referenceId);
+            if (section.tourId) itemIds.push(section.tourId);
+            if (section.pageId) itemIds.push(section.pageId);
+            if (section.attachedItems) {
+                const extraIds = section.attachedItems.map(item => typeof item === 'object' ? item.id : item);
+                itemIds = [...itemIds, ...extraIds];
+            }
+            const uniqueIds = [...new Set(itemIds.map(id => typeof id === 'object' ? (id.id || id._id) : id))];
+            if (uniqueIds.length > 0) {
+                const modelName = section.type === 'tour' ? 'Tour' : 'Page';
+                section.referenceId = await Promise.all(uniqueIds.map(async (finalId) => {
+                    const data = await this.blogModel.db.model(modelName).findById(finalId).select('title name').lean().exec();
+                    return { id: finalId, text: (data as any)?.title || (data as any)?.name || "Linked Item", type: section.type };
+                }));
+            }
+        }
     }
+    return blog;
+}
 
     async findBySlug(slug: string): Promise<Blog> {
         const blog = await this.blogModel
             .findOne({ slug})
-            .populate("categories", "name slug")
             .populate("author", "name email")
             .exec();
 
@@ -224,14 +270,6 @@ export class BlogsService {
         }
 
         const processedUpdateDto: any = { ...updateBlogDto };
-
-        if (processedUpdateDto.categories && !Array.isArray(processedUpdateDto.categories)) {
-            processedUpdateDto.categories = [processedUpdateDto.categories].filter(id => Types.ObjectId.isValid(id)).map(id => new Types.ObjectId(id));
-        } else if (processedUpdateDto.categories) {
-            processedUpdateDto.categories = processedUpdateDto.categories.filter(id => Types.ObjectId.isValid(id)).map(id => new Types.ObjectId(id));
-        } else {
-            processedUpdateDto.categories = [];
-        }
 
         const isPublishing = blog.status !== BlogStatus.VISIBLE && processedUpdateDto.status === BlogStatus.VISIBLE;
 
@@ -295,6 +333,7 @@ export class BlogsService {
         .find({ status: BlogStatus.VISIBLE }) // Only visible blogs
         .sort({ views: -1, createdAt: -1 }) // Sort by views (desc), then by newest (desc)
         .limit(limit)
+        .populate('sections')
         .select('title slug coverImage excerpt createdAt') // Select fields needed for card/list
         .exec();
       return blogs;
@@ -321,4 +360,83 @@ export class BlogsService {
       // Don't throw a major error for view increment failures; it's a background task.
     }
   }
+
+  async searchForBlogs(q: string) {
+    return this.blogModel
+        .find({ title: { $regex: q, $options: 'i' }, status: 'visible' })
+        .select('title _id')
+        .limit(10)
+        .exec();
+}
+
+async getBlogDetailsForPublic(slug: string) {
+    // 1. Fetch the main blog
+    const blog = await this.blogModel.findOne({ slug, status: BlogStatus.VISIBLE })
+        .populate('categories countries author sections.tourId sections.pageId sections.relatedBlogId sections.destinationId sections.categoryId sections.countryId')
+        .exec();
+
+    if (!blog) return null;
+
+    // 2. Iterate through sections to handle Standalone Blocks and Paragraph Attachments
+    for (const section of blog.sections) {
+        
+        // --- FIX STANDALONE BLOCKS (Embedded Tours/Pages) ---
+        // If the section is a tour/page but tourId/pageId is empty, try to fetch using referenceId
+        if (section.referenceId) {
+            try {
+                if (section.type === 'tour' && !section.tourId) {
+                    section.tourId = await this.blogModel.db.model('Tour').findById(section.referenceId).lean();
+                } else if (section.type === 'page' && !section.pageId) {
+                    section.pageId = await this.blogModel.db.model('Page').findById(section.referenceId).lean();
+                }
+            } catch (e) {
+                console.error(`Failed to fetch standalone reference: ${section.referenceId}`, e);
+            }
+        }
+
+        // --- FIX PARAGRAPH ATTACHMENTS ---
+        if (section.attachedItems && section.attachedItems.length > 0) {
+            // Filter out any null/undefined IDs to prevent query errors
+            const validIds = section.attachedItems.filter(id => id);
+
+            const [tours, blogs, destinations, cats, countries, pages] = await Promise.all([
+                this.blogModel.db.model('Tour').find({ _id: { $in: validIds } }).lean(),
+                this.blogModel.db.model('Blog').find({ _id: { $in: validIds } }).lean(),
+                this.blogModel.db.model('Destination').find({ _id: { $in: validIds } }).lean(),
+                this.blogModel.db.model('Category').find({ _id: { $in: validIds } }).lean(),
+                this.blogModel.db.model('Country').find({ _id: { $in: validIds } }).lean(),
+                this.blogModel.db.model('Page').find({ _id: { $in: validIds } }).lean(),
+            ]);
+
+            // Map them into a single array for EJS rendering
+            (section as any).resolvedAttachments = [
+                ...tours.map(i => ({ ...i, type: 'tour' })),
+                ...blogs.map(i => ({ ...i, type: 'blog' })),
+                ...destinations.map(i => ({ ...i, type: 'destination' })),
+                ...cats.map(i => ({ ...i, type: 'category' })),
+                ...countries.map(i => ({ ...i, type: 'country' })),
+                ...pages.map(i => ({ ...i, type: 'page' })),
+            ];
+        }
+    }
+
+    // 3. Fetch Navigation and Related Data
+    const prevBlog = await this.blogModel.findOne({ 
+        createdAt: { $lt: (blog as any).createdAt }, 
+        status: BlogStatus.VISIBLE 
+    }).sort({ createdAt: -1 }).select('title slug').lean();
+
+    const nextBlog = await this.blogModel.findOne({ 
+        createdAt: { $gt: (blog as any).createdAt }, 
+        status: BlogStatus.VISIBLE 
+    }).sort({ createdAt: 1 }).select('title slug').lean();
+
+    const relatedBlogs = await this.blogModel.find({ 
+        status: BlogStatus.VISIBLE, 
+        categories: { $in: blog.categories.map(c => (c as any)._id || c) }, 
+        _id: { $ne: blog._id } 
+    }).limit(3).lean();
+
+    return { blog, prevBlog, nextBlog, relatedBlogs };
+}
 }

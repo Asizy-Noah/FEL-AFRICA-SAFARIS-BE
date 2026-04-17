@@ -1,0 +1,703 @@
+<section id="home" class="generic-hero-section">
+    <div class="generic-hero-content">
+        <h1 class="generic-hero-title">
+            Experience <span class="highlight-gold"><%= country.name %></span>
+        </h1>
+        <p class="generic-hero-subtitle">
+            <%= country.overview || 'Explore the beauty of Africa' %>
+        </p>
+    </div>
+    <div class="generic-hero-overlay"></div>
+    <img src="<%= country.coverImage || '/images/nat-3-large.jpg' %>" alt="<%= country.name %>" class="hero-bg">
+    <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+</section>
+
+<section class="container description-section py-5">
+    <div class="row">
+        <article class="col-lg-8 post-body">
+            <h4 class="post-title m-3">
+                <%= country.name %> - <%= country.subtitle || 'A Remarkable Journey' %>
+            </h4>
+            
+            <div class="country-overview m-3">
+                <%- country.description %>
+            </div>
+        </article>
+        
+        <div class="col-lg-4 s-s-side-bar">
+            <div class="sidebar-widget search-widget">
+                    <h3 class="widget-title">Search Tours</h3>
+                    <form class="search-form" action="/searchAll" method="GET">
+                        <input type="text" name="search" class="search-input" placeholder="Enter keywords...">
+                        <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+                    </form>
+                </div>
+            <div class="mb-3 px-2">
+                <div class="mb-2">
+                    <h4 class="m-0 text-uppercase font-weight-bold">Follow Us</h4>
+                </div>
+                <div class="row bg-white border border-top-0 p-3">
+                    <a href="#" class="d-block w-25 text-white text-decoration-none" style="background: #39569E;"><i class="fab fa-facebook-f text-center py-4 mr-3" style="width: 100%;"></i></a>
+                    <a href="#" class="d-block w-25 text-white text-decoration-none" style="background: #52AAF4;"><i class="fab fa-twitter text-center py-4 mr-3" style="width: 100%;"></i></a>
+                    <a href="#" class="d-block w-25 text-white text-decoration-none" style="background: #C8359D;"><i class="fab fa-instagram text-center py-4 mr-3" style="width: 100%;"></i></a>
+                    <a href="#" class="d-block w-25 text-white text-decoration-none" style="background: #DC472E;"><i class="fab fa-youtube text-center py-4 mr-3" style="width: 100%;"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="explore-by-categories-section">
+    <div class="container">
+        <div class="section-header text-center mb-5">
+            <h2 class="section-title text-center mb-3">Explore Destinations by category</h2>
+        </div>
+
+        <div class="blog-carousel-wrapper category-filter-wrapper">
+            <button class="blog-carousel-nav-btn carousel-prev" data-carousel="categories-carousel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+
+            <div class="blog-carousel-container categories-carousel">
+                <div class="carousel-track">
+                    <div class="blog-carousel-slide category-card active" data-filter="all">
+                        <div class="category-link">
+                            <span>All categories</span>
+                        </div>
+                    </div>
+                    <% if (categories && categories.length > 0) { %>
+                        <% categories.forEach(cat => { %>
+                            <div class="blog-carousel-slide category-card" data-filter="<%= cat._id %>">
+                                <div class="category-link">
+                                    <span><%= cat.name %></span>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <button class="blog-carousel-nav-btn carousel-next" data-carousel="categories-carousel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </div>
+</section>
+
+<div class="container-xxl py-5">
+    <div class="container">
+        <div class="blog-grid" id="destination-grid">
+            <% if (country.destinations && country.destinations.length > 0) { %>
+                <% country.destinations.forEach(dest => { %>
+                    <div class="destination-item-wrapper" data-categories="<%= (dest.categories || []).map(c => c._id || c).join(' ') %>">
+                        <a href="/destinations/<%= dest.slug %>">
+                            <div class="destination-card">
+                                <img src="<%= dest.coverImage || '/images/nat-4.jpg' %>" alt="<%= dest.name %>" class="destination-img">
+                                <div class="destination-content">
+                                    <h3><%= dest.name %></h3>
+                                    <p><%= dest.shortDescription %></p>
+                                </div>
+                                <div class="destination-overlay"></div>
+                            </div>
+                        </a>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+
+        <div class="pagination mt-5" id="pagination-controls">
+            </div>
+    </div>
+</div>
+
+<section id="tours" class="safari-packages mb-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">Explore <%= country.name %> Safari Packages</h2>
+
+        <div class="blog-carousel-wrapper">
+                <button class="blog-carousel-nav-btn carousel-prev" data-carousel="itineraries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <div class="blog-carousel-container itineraries-carousel">
+                    <div class="carousel-track">
+                        <!-- Packages -->
+                        <% if (tours && tours.length > 0) { %>
+                            <% tours.forEach(tour => { %>
+                            <div class="blog-carousel-slide itinerary-card">
+                                <div class="itinerary-image" ><img src="<%= tour.coverImage %>" alt="<%= tour.title %>"></div>
+                                <div class="package-info">
+                                    <h3><%= tour.title %></h3>
+                                    <div class="d-flex justify-content-between mb-2 mt-3">
+                                        <small class="m-0"><i class="fa fa-calendar-alt me-1"></i><%= tour.days %> days</small>
+                                        <small class="m-0"><i class="fa fa-user me-1"></i><%= tour.groupSize || '2' %> Person</small>
+                                    </div>
+                                    <p class="price">$<%= tour.price.toLocaleString() %></p>
+                                    <p><% 
+                                    const cleanOverview = tour.overview.replace(/<[^>]*>?/gm, '');
+                                    const truncatedText = cleanOverview.length > 120 ? cleanOverview.substring(0, 120) + '...' : cleanOverview;
+                                    %>
+                                    <%= truncatedText %></p>
+                                    <a href="/tours/<%= tour.slug %>">
+                                        <button class="filter-tab">View Package</button>
+                                    </a>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="col-12 text-center">
+                            <p>No specific packages found for <%= country.name %> right now. Contact us for a custom itinerary!</p>
+                        </div>
+                    <% } %>
+                    </div>
+                </div>
+
+                <button class="blog-carousel-nav-btn carousel-next" data-carousel="itineraries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+    </div>
+</section>
+
+<script>
+    // ================================
+// CAROUSEL & CATEGORY MANAGER
+// ================================
+
+class BlogCarousel {
+    constructor() {
+        this.carousels = new Map();
+        this.init();
+    }
+
+    init() {
+        const carouselContainers = document.querySelectorAll('.blog-carousel-container');
+        carouselContainers.forEach((container) => {
+            this.setupCarousel(container);
+        });
+        this.setupNavButtons();
+    }
+
+    setupCarousel(container) {
+        const track = container.querySelector('.carousel-track');
+        // Targeted the updated class name: .category-card
+        const slides = container.querySelectorAll('.blog-carousel-slide');
+        
+        if (!track || slides.length === 0) return;
+
+        const carouselId = Math.random().toString(36).substr(2, 9);
+        
+        this.carousels.set(carouselId, {
+            container: container,
+            track: track,
+            currentIndex: 0,
+            slides: slides,
+            slideWidth: 0,
+            gap: 0,
+            isAnimating: false
+        });
+
+        setTimeout(() => {
+            this.updateSlideDimensions(carouselId);
+        }, 100);
+        
+        window.addEventListener('resize', () => this.updateSlideDimensions(carouselId));
+    }
+
+    updateSlideDimensions(carouselId) {
+        const carousel = this.carousels.get(carouselId);
+        if (!carousel) return;
+
+        const firstSlide = carousel.slides[0];
+        const computedStyle = window.getComputedStyle(carousel.track);
+        carousel.gap = parseFloat(computedStyle.gap) || 24;
+        carousel.slideWidth = firstSlide.offsetWidth;
+
+        this.checkNavButtons(carouselId);
+    }
+
+    checkNavButtons(carouselId) {
+        const carousel = this.carousels.get(carouselId);
+        if (!carousel) return;
+
+        // Matches your data-carousel="categories-carousel"
+        const containerClass = Array.from(carousel.container.classList).find(c => c.endsWith('-carousel'));
+        const prevBtn = document.querySelector(`.carousel-prev[data-carousel="${containerClass}"]`);
+        const nextBtn = document.querySelector(`.carousel-next[data-carousel="${containerClass}"]`);
+
+        if (!prevBtn || !nextBtn) return;
+
+        const containerWidth = carousel.container.offsetWidth;
+        const totalWidth = carousel.track.scrollWidth;
+        const currentOffset = Math.abs(carousel.currentIndex * (carousel.slideWidth + carousel.gap));
+
+        if (totalWidth <= containerWidth) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            return;
+        }
+
+        prevBtn.style.display = carousel.currentIndex === 0 ? 'none' : 'flex';
+        const remainingSpace = totalWidth - (currentOffset + containerWidth);
+        nextBtn.style.display = remainingSpace <= 1 ? 'none' : 'flex'; 
+    }
+
+    setupNavButtons() {
+        document.querySelectorAll('.blog-carousel-nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const btnElement = e.currentTarget;
+                const carouselName = btnElement.dataset.carousel;
+                const direction = btnElement.classList.contains('carousel-next') ? 1 : -1;
+
+                this.carousels.forEach((carousel, id) => {
+                    if (carousel.container.classList.contains(carouselName)) {
+                        this.slideCarousel(id, direction);
+                    }
+                });
+            });
+        });
+    }
+
+    slideCarousel(carouselId, direction) {
+        const carousel = this.carousels.get(carouselId);
+        if (!carousel || carousel.isAnimating) return;
+
+        const containerWidth = carousel.container.offsetWidth;
+        const totalWidth = carousel.track.scrollWidth;
+        const step = carousel.slideWidth + carousel.gap;
+        const maxScroll = totalWidth - containerWidth;
+        const maxIndex = Math.ceil(maxScroll / step);
+
+        let newIndex = carousel.currentIndex + direction;
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex > maxIndex) newIndex = maxIndex;
+        if (newIndex === carousel.currentIndex) return;
+
+        carousel.isAnimating = true;
+        carousel.currentIndex = newIndex;
+
+        let offset = -(carousel.currentIndex * step);
+        if (Math.abs(offset) > maxScroll) {
+            offset = -maxScroll;
+        }
+
+        carousel.track.style.transform = `translateX(${offset}px)`;
+
+        setTimeout(() => {
+            carousel.isAnimating = false;
+            this.checkNavButtons(carouselId);
+        }, 600);
+    }
+}
+
+class CategoryManager {
+    constructor() {
+        this.itemsPerPage = 6;
+        this.currentPage = 1;
+        this.currentFilter = 'all';
+        this.grid = document.getElementById('destination-grid');
+        // Ensure this ID exists in your HTML container for destinations
+        this.items = Array.from(document.querySelectorAll('.destination-item-wrapper'));
+        this.filteredItems = [...this.items];
+        
+        this.init();
+    }
+
+    init() {
+        // Updated to your new class: .category-card
+        const categorySlides = document.querySelectorAll('.category-card');
+        categorySlides.forEach(slide => {
+            slide.addEventListener('click', () => {
+                categorySlides.forEach(s => s.classList.remove('active'));
+                slide.classList.add('active');
+                
+                this.currentFilter = slide.dataset.filter;
+                this.currentPage = 1;
+                this.applyFilter();
+            });
+        });
+
+        this.applyFilter(); 
+    }
+
+    applyFilter() {
+        if (this.currentFilter === 'all') {
+            this.filteredItems = this.items;
+        } else {
+            this.filteredItems = this.items.filter(item => {
+                const itemCats = item.dataset.categories ? item.dataset.categories.split(' ') : [];
+                return itemCats.includes(this.currentFilter);
+            });
+        }
+        this.renderGrid();
+    }
+
+    renderGrid() {
+        if (!this.grid) return;
+        
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+
+        // We use display: none/block to maintain the elements for the next filter
+        this.items.forEach(item => item.style.display = 'none');
+        
+        const pageItems = this.filteredItems.slice(start, end);
+        
+        if (this.filteredItems.length === 0) {
+            // Use a temporary empty state if no results
+            const noResults = document.getElementById('no-results-msg') || document.createElement('p');
+            noResults.id = 'no-results-msg';
+            noResults.className = 'text-center w-100 mt-4';
+            noResults.innerText = 'No destinations found for this interest.';
+            if (!document.getElementById('no-results-msg')) this.grid.appendChild(noResults);
+        } else {
+            const msg = document.getElementById('no-results-msg');
+            if (msg) msg.remove();
+            pageItems.forEach(item => item.style.display = 'block');
+        }
+
+        this.updatePagination();
+    }
+
+    updatePagination() {
+        const pageCount = Math.ceil(this.filteredItems.length / this.itemsPerPage);
+        const container = document.getElementById('pagination-controls');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        if (pageCount <= 1) return;
+
+        for (let i = 1; i <= pageCount; i++) {
+            const btn = document.createElement('button');
+            btn.className = `pagination-btn ${i === this.currentPage ? 'active' : ''}`;
+            btn.innerText = i;
+            btn.onclick = () => {
+                this.currentPage = i;
+                this.renderGrid();
+                this.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+            container.appendChild(btn);
+        }
+    }
+}
+
+// Global Initialization
+document.addEventListener('DOMContentLoaded', () => {
+    new BlogCarousel();
+    new CategoryManager();
+});
+</script>
+
+<style>
+    /* ================================
+    CONTAINER & SECTIONS
+    ================================ */
+    .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-foreground);
+    margin-bottom: 0.5rem;
+    }
+
+    /* ================================
+    EXPLORE BY COUNTRY SECTION
+    ================================ */
+    .explore-by-categories-section {
+    padding: 4rem 0;
+    background: var(--color-white);
+    }
+
+    .blog-carousel-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    }
+
+    .blog-carousel-nav-btn {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    opacity: 0.5;
+    color: var(--color-white);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow);
+    }
+
+    .blog-carousel-nav-btn.carousel-prev {
+    left: 0;
+    z-index: 20;
+    }
+
+    .blog-carousel-nav-btn.carousel-next {
+    right: 0;
+    }
+
+    .blog-carousel-nav-btn:hover {
+    background: var(--color-accent);
+    transform: scale(1.08);
+    box-shadow: var(--shadow-hover);
+    }
+
+    .blog-carousel-nav-btn svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+    }
+
+    .blog-carousel-nav-btn:active svg {
+    transform: scale(1.15);
+    }
+
+    .blog-carousel-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: block;
+    }
+
+    .carousel-track {
+    display: flex;
+    gap: 1.5rem;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: max-content;
+    }
+
+    .blog-carousel-slide {
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    }
+
+    /* Country Cards */
+    .categories-carousel {
+        margin: auto 0;
+    }
+
+    .category-card {
+    flex-shrink: 0;
+    width: 200px;
+    min-width: 200px;
+    background: var(--color-white);
+    border: 2px solid var(--color-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    .category-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    padding: 1.5rem;
+    color: var(--color-foreground);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    }
+
+    .category-card:hover {
+    border-color: var(--color-secondary);
+    background: #faf8f3;
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    }
+
+    .category-link:hover {
+    color: var(--color-secondary);
+    }
+
+        .category-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .category-card.active {
+            opacity: 1;
+            transform: translateY(-5px);
+        }
+
+        .category-card.active .category-link {
+            background: var(--gold-color, #d4af37); /* Use your brand color */
+            color: white;
+        }
+
+        /* Ensure the grid doesn't jump during filtering */
+        .blog-grid {
+            min-height: 400px;
+            transition: opacity 0.3s ease;
+        }
+
+        .destination-item-wrapper {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }    
+
+    @media (max-width: 768px) {
+
+    .blog-carousel-slide {
+        width: 150px;
+    }
+
+    .trending-card {
+        width: 280px;
+    }
+
+    .blog-carousel-nav-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .blog-carousel-nav-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    }
+
+    @media (max-width: 576px) {
+    
+    .blog-carousel-slide {
+        width: 120px;
+    }
+
+    .trending-card {
+        width: 100%;
+    }
+
+    .blog-carousel-nav-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .section-header h2 {
+        font-size: 1.75rem;
+    }
+    }
+
+
+
+    /* ================================
+    RESPONSIVE ADJUSTMENTS
+    ================================ */
+
+
+    @media (max-width: 768px) {
+    .explore-by-category-section,
+    .trending-now-section,
+    .explore-by-interest-section,
+    .featured-itineraries-section {
+        padding: 2.5rem 0;
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+    }
+
+    .section-header h2 {
+        font-size: 2rem;
+    }
+
+    .blog-carousel-slide {
+        width: 140px;
+    }
+
+    .category-link {
+        height: 80px;
+        font-size: 1rem;
+    }
+
+    .blog-carousel-nav-btn {
+        width: 44px;
+        height: 44px;
+    }
+    }
+
+    @media (max-width: 576px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .explore-by-category-section,
+    .trending-now-section,
+    .explore-by-interest-section,
+    .featured-itineraries-section {
+        padding: 2rem 0;
+    }
+
+    .section-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .section-header p {
+        font-size: 0.95rem;
+    }
+
+    .blog-carousel-wrapper {
+        gap: 0.75rem;
+    }
+
+    .blog-carousel-slide {
+        width: 120px;
+    }
+
+    .category-link {
+        height: 70px;
+        font-size: 0.9rem;
+        padding: 1rem;
+    }
+
+    .blog-carousel-nav-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .blog-carousel-nav-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .trending-card {
+        width: 100%;
+    }
+
+    .itinerary-card {
+        width: 100%;
+    }
+    }
+
+ </style>

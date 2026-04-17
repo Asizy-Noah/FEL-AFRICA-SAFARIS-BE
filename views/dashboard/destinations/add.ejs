@@ -28,35 +28,59 @@
 
             <div class="form-group">
                 <label for="destinationCategories">Categories</label>
-                <select id="destinationCategories" name="categories" class="form-control" multiple style="height:120px;">
-                    <% categories.forEach(function(cat) { %>
-                        <option value="<%= cat._id %>"><%= cat.name %></option>
-                    <% }); %>
-                </select>
+                <div class="multi-select-container" id="categoryMultiSelectContainer">
+                    <div class="selected-tags-container" id="categoryTagsContainer">
+                        <input type="text" id="categorySearchInput" class="tag-input-field" placeholder="Select Country first..." autocomplete="off">
+                    </div>
+                    
+                    <div class="dropdown-list" id="categoryDropdown">
+                        </div>
+
+                    <select id="destinationCategories" name="categories" class="hidden-select" multiple required>
+                        <% if (typeof destination !== 'undefined' && destination.categories) { %>
+                            <% destination.categories.forEach(cat => { %>
+                                <option value="<%= cat._id %>" selected><%= cat.name %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="coverImage">Upload Cover Image</label>
-                <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                <div class="file-upload-container">
+                    <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop image or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="imagePreview">
+                        <img src="" alt="Image Preview" style="display: none;">
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" rows="6"><%= typeof body !== 'undefined' ? body.description : '' %></textarea>
+                <label for="destinationDescription">Description</label>
+                <div id="destinationDescriptionEditor" class="editor-container" style="height: 100px; background: white;"></div>
+                <input type="hidden" name="description" id="destinationDescription">
             </div>
 
-            <h3 class="section-title">SEO</h3>
+            <h3 class="section-title">SEO Information</h3>
             <div class="form-group">
                 <label for="seoTitle">Meta Title</label>
                 <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="">
+                <small class="form-text text-muted">Recommended length: 50-60 characters</small>
             </div>
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
                 <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters</small>
             </div>
             <div class="form-group">
                 <label for="seoKeywords">Meta Keywords</label>
                 <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="">
+                <small class="form-text text-muted">Separate keywords with commas</small>
             </div>
         </div>
 
@@ -65,3 +89,182 @@
         </div>
     </form>
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('destinationCountry');
+    const searchInput = document.getElementById('categorySearchInput');
+    const dropdown = document.getElementById('categoryDropdown');
+    const tagsContainer = document.getElementById('categoryTagsContainer');
+    const realSelect = document.getElementById('destinationCategories');
+
+    // 1. Helper: Update Visual Tags and Dropdown Highlights
+    function updateTags() {
+        tagsContainer.querySelectorAll('.country-tag').forEach(tag => tag.remove());
+
+        Array.from(realSelect.selectedOptions).forEach(option => {
+            const tag = document.createElement('span');
+            tag.className = 'country-tag';
+            tag.innerHTML = `${option.text} <span class="remove-tag" data-id="${option.value}">&times;</span>`;
+            tagsContainer.insertBefore(tag, searchInput);
+        });
+
+        dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+            const isSelected = Array.from(realSelect.selectedOptions).some(opt => opt.value === item.dataset.id);
+            item.classList.toggle('selected', isSelected);
+        });
+    }
+
+    // 2. Core Fix: Use the API but ensure it handles the UI correctly
+    async function loadCategories(countryId) {
+        if (!countryId) {
+            dropdown.innerHTML = '';
+            realSelect.innerHTML = '';
+            searchInput.placeholder = "Select Country first...";
+            return;
+        }
+
+        try {
+            const response = await fetch(`/categories/api/by-country/${countryId}`);
+            if (!response.ok) throw new Error('API Error');
+            
+            const categories = await response.json();
+            
+            // Clear current options
+            realSelect.innerHTML = '';
+            dropdown.innerHTML = '';
+
+            if (categories.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item">No categories found</div>';
+                return;
+            }
+
+            categories.forEach(cat => {
+                // Add to hidden select
+                const opt = document.createElement('option');
+                opt.value = cat._id;
+                opt.text = cat.name;
+                realSelect.appendChild(opt);
+
+                // Add to visual dropdown
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.id = cat._id;
+                item.textContent = cat.name;
+                dropdown.appendChild(item);
+            });
+
+            searchInput.placeholder = "Search categories...";
+            updateTags();
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            dropdown.innerHTML = '<div class="dropdown-item text-danger">Error loading categories</div>';
+        }
+    }
+
+    // --- Listeners (Mirroring your working Category logic) ---
+    
+    countrySelect.addEventListener('change', function() {
+        loadCategories(this.value);
+    });
+
+    searchInput.addEventListener('focus', () => {
+        if (countrySelect.value) dropdown.style.display = 'block';
+    });
+
+    dropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.dropdown-item');
+        if (item && item.dataset.id) {
+            const id = item.dataset.id;
+            const option = Array.from(realSelect.options).find(opt => opt.value === id);
+            if (option) {
+                option.selected = !option.selected;
+                updateTags();
+            }
+        }
+    });
+
+    tagsContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-tag')) {
+            const id = e.target.dataset.id;
+            const option = Array.from(realSelect.options).find(opt => opt.value === id);
+            if (option) {
+                option.selected = false;
+                updateTags();
+            }
+        }
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.multi-select-container')) {
+            dropdown.style.display = 'none';
+        }
+    });
+});
+
+/* =====Txeditor logic========= */
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Rich Text Editor Initialization ---
+    const descriptionEditor = document.getElementById('destinationDescriptionEditor');
+    const hiddenDescriptionInput = document.getElementById('destinationDescription');
+    let quill;
+
+    if (descriptionEditor && typeof Quill !== 'undefined') {
+        quill = new Quill(descriptionEditor, {
+            theme: 'snow',
+            placeholder: 'Write the detailed destination description here...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Load existing content if editing
+        if (hiddenDescriptionInput.value) {
+            quill.root.innerHTML = hiddenDescriptionInput.value;
+        }
+
+        // Sync Quill content to hidden input on every change
+        quill.on('text-change', () => {
+            hiddenDescriptionInput.value = quill.root.innerHTML;
+        });
+        
+    } else if (descriptionEditor) {
+        // Fallback for failed library load
+        const fallbackTextarea = document.createElement('textarea');
+        fallbackTextarea.name = 'description';
+        fallbackTextarea.className = 'form-control';
+        fallbackTextarea.rows = '10';
+        fallbackTextarea.value = hiddenDescriptionInput.value;
+        descriptionEditor.parentNode.replaceChild(fallbackTextarea, descriptionEditor);
+        hiddenDescriptionInput.remove();
+    }
+});
+</script>
+
+<style>
+    #categoryDropdown {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    width: 100%;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+.dropdown-item:hover { background: #f0f0f0; }
+.dropdown-item.selected { background: #e3f2fd; color: #0d47a1; }
+</style>

@@ -1,0 +1,396 @@
+   
+    <!-- Hero Section (Include your header here) -->
+    <section id="home" class="generic-hero-section">
+        <div class="generic-hero-content">
+            <h1 class="generic-hero-title">
+                Our <span class="highlight-gold">Blogs</span>
+            </h1>
+        </div>
+        <div class="generic-hero-overlay"></div>
+        <img src="/img/nat-2-large.jpg" alt="African Elephant Safari" class="hero-bg">
+        <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- EXPLORE BY COUNTRY SECTION -->
+    <section class="explore-by-country-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Explore by Country</h2>
+                <p>Discover blog posts from your favorite African destinations</p>
+            </div>
+
+            <div class="blog-carousel-wrapper">
+                <button class="blog-carousel-nav-btn carousel-prev" data-carousel="countries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <div class="blog-carousel-container countries-carousel">
+                    <div class="carousel-track">
+                        <% countries.forEach(country => { %>
+                            <div class="blog-carousel-slide country-card">
+                                <a href="/blogs/country/<%= country._id %>" class="country-link">
+                                    <span><%= country.name %></span>
+                                </a>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <button class="blog-carousel-nav-btn carousel-next" data-carousel="countries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRENDING NOW SECTION -->
+    <section class="trending-now-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Trending Now</h2>
+                <p>The most popular safari stories and travel guides</p>
+            </div>
+
+            <div class="blog-carousel-wrapper">
+                <button class="blog-carousel-nav-btn carousel-prev" data-carousel="trending-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <div class="blog-carousel-container trending-carousel">
+                    <div class="carousel-track">
+                        <!-- Blog Cards -->
+                        <% trendingBlogs.forEach(blog => { %>
+                            <div class="blog-carousel-slide trending-card">
+                                <div class="trending-link">
+                                    <div class="trending-image">
+                                        <img src="<%= blog.coverImage %>" alt="<%= blog.title %>">
+                                    </div>
+                                    <div class="trending-content">
+                                        <h3><%= blog.title %></h3>
+                                        <p>
+                                            <% 
+                                            // 1. Get the content
+                                            const introSection = blog.sections ? blog.sections.find(s => s.type === 'intro') : null;
+                                            let rawContent = (introSection && introSection.body) ? introSection.body : (blog.excerpt || '');
+
+                                            // 2. Strip HTML AND Decode Entities (to get actual text length)
+                                            // We use a simple regex for tags and trim whitespace
+                                            let cleanText = rawContent.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
+
+                                            // 3. Truncate
+                                            let truncatedText = cleanText;
+                                            if (cleanText.length > 100) {
+                                                truncatedText = cleanText.substring(0, 100).trim() + '...';
+                                            }
+                                            %>
+                                            <%= truncatedText || 'Explore more about this adventure...' %>
+                                        </p>
+                                        <div class="trending-meta">
+                                            <div class="blog-footer">
+                                                <a href="/blogs/<%= blog.slug %>" class="view-btn">Read More</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <button class="blog-carousel-nav-btn carousel-next" data-carousel="trending-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- EXPLORE BY INTEREST SECTION -->
+    <section class="explore-by-interest-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Explore by Interest</h2>
+                <p>Find blog posts by your favorite topics and interests</p>
+            </div>
+
+            <div class="interest-grid">
+                <% categories.forEach(cat => { %>
+                    <div class="interest-card" onclick="window.location.href='/blogs/category/<%= cat._id %>'">
+                        <div class="interest-image">
+                            <img src="<%= cat.image || '/images/default-category.jpg' %>" alt="<%= cat.name %>">
+                            <div class="interest-overlay"></div>
+                            <h3 class="interest-title text-white"><%= cat.name %></h3>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURED ITINERARIES SECTION -->
+    <section class="featured-itineraries-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Featured Safari Packages</h2>
+                <p>Popular safari itineraries featured in our blog posts</p>
+            </div>
+
+            <div class="blog-carousel-wrapper">
+                <button class="blog-carousel-nav-btn carousel-prev" data-carousel="itineraries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <div class="blog-carousel-container itineraries-carousel">
+                    <div class="carousel-track">
+                        <!-- Packages -->
+                        <% itineraries.forEach(tour => { %>
+                            <div class="blog-carousel-slide itinerary-card">
+                                <div class="itinerary-image" ><img src="<%= tour.coverImage %>" alt="<%= tour.title %>"></div>
+                                <div class="package-info">
+                                    <h3><%= tour.title %></h3>
+                                    <div class="d-flex justify-content-between mb-2 mt-3">
+                                        <small class="m-0"><i class="fa fa-calendar-alt me-1"></i><%= tour.days %> days</small>
+                                        <small class="m-0"><i class="fa fa-user me-1"></i><%= tour.groupSize || '2' %> Person</small>
+                                    </div>
+                                    <p class="price">$<%= tour.price.toLocaleString() %></p>
+                                    <p><% 
+                                    const cleanOverview = tour.overview.replace(/<[^>]*>?/gm, '');
+                                    const truncatedText = cleanOverview.length > 120 ? cleanOverview.substring(0, 120) + '...' : cleanOverview;
+                                    %>
+                                    <%= truncatedText %></p>
+                                    <a href="/tours/<%= tour.slug %>">
+                                        <button class="filter-tab">View Package</button>
+                                    </a>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <button class="blog-carousel-nav-btn carousel-next" data-carousel="itineraries-carousel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // ================================
+        // BLOGS PAGE - CAROUSEL SYSTEM
+        // ================================
+
+        class BlogCarousel {
+            constructor() {
+                this.carousels = new Map();
+                this.init();
+            }
+
+            init() {
+                const carouselContainers = document.querySelectorAll('.blog-carousel-container');
+                
+                carouselContainers.forEach((container) => {
+                    this.setupCarousel(container);
+                });
+
+                this.setupNavButtons();
+            }
+
+            setupCarousel(container) {
+                const track = container.querySelector('.carousel-track');
+                const slides = container.querySelectorAll('.blog-carousel-slide');
+                
+                if (!track || slides.length === 0) return;
+
+                // Use the data-carousel attribute from the button to link to the container class
+                // or a random ID if using multiple of the same type
+                const carouselId = Math.random().toString(36).substr(2, 9);
+                
+                this.carousels.set(carouselId, {
+                    container: container,
+                    track: track,
+                    currentIndex: 0,
+                    slides: slides,
+                    slideWidth: 0,
+                    gap: 0,
+                    isAnimating: false
+                });
+
+                // Initial setup and button check
+                setTimeout(() => {
+                    this.updateSlideDimensions(carouselId);
+                }, 100);
+                
+                window.addEventListener('resize', () => this.updateSlideDimensions(carouselId));
+            }
+
+            updateSlideDimensions(carouselId) {
+                const carousel = this.carousels.get(carouselId);
+                if (!carousel) return;
+
+                const firstSlide = carousel.slides[0];
+                const computedStyle = window.getComputedStyle(carousel.track);
+                carousel.gap = parseFloat(computedStyle.gap) || 24;
+                carousel.slideWidth = firstSlide.offsetWidth;
+
+                this.checkNavButtons(carouselId);
+            }
+
+            checkNavButtons(carouselId) {
+                const carousel = this.carousels.get(carouselId);
+                if (!carousel) return;
+
+                // Find buttons related to this specific container
+                const containerClass = Array.from(carousel.container.classList).find(c => c.endsWith('-carousel'));
+                const prevBtn = document.querySelector(`.carousel-prev[data-carousel="${containerClass}"]`);
+                const nextBtn = document.querySelector(`.carousel-next[data-carousel="${containerClass}"]`);
+
+                if (!prevBtn || !nextBtn) return;
+
+                const containerWidth = carousel.container.offsetWidth;
+                const totalWidth = carousel.track.scrollWidth;
+                const currentOffset = Math.abs(carousel.currentIndex * (carousel.slideWidth + carousel.gap));
+
+                // 1. Hide both if content is smaller than container
+                if (totalWidth <= containerWidth) {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                    return;
+                }
+
+                // 2. Logic for Prev Button (Hide if at start)
+                prevBtn.style.display = carousel.currentIndex === 0 ? 'none' : 'flex';
+
+                // 3. Logic for Next Button (Hide if no more content to the right)
+                // We check if the current offset + container width is >= total track width
+                const remainingSpace = totalWidth - (currentOffset + containerWidth);
+                nextBtn.style.display = remainingSpace <= 1 ? 'none' : 'flex'; 
+            }
+
+            setupNavButtons() {
+                document.querySelectorAll('.blog-carousel-nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const btnElement = e.currentTarget;
+                        const carouselName = btnElement.dataset.carousel;
+                        const direction = btnElement.classList.contains('carousel-next') ? 1 : -1;
+
+                        this.carousels.forEach((carousel, id) => {
+                            if (carousel.container.classList.contains(carouselName)) {
+                                this.slideCarousel(id, direction);
+                            }
+                        });
+                    });
+                });
+            }
+
+            slideCarousel(carouselId, direction) {
+                const carousel = this.carousels.get(carouselId);
+                if (!carousel || carousel.isAnimating) return;
+
+                const containerWidth = carousel.container.offsetWidth;
+                const totalWidth = carousel.track.scrollWidth;
+                const step = carousel.slideWidth + carousel.gap;
+                
+                // Calculate the maximum index that doesn't show empty space at the end
+                const maxScroll = totalWidth - containerWidth;
+                const maxIndex = Math.ceil(maxScroll / step);
+
+                let newIndex = carousel.currentIndex + direction;
+
+                // Stop movement if out of bounds (No looping)
+                if (newIndex < 0) newIndex = 0;
+                if (newIndex > maxIndex) newIndex = maxIndex;
+                
+                // If the index hasn't actually changed, don't animate
+                if (newIndex === carousel.currentIndex) return;
+
+                carousel.isAnimating = true;
+                carousel.currentIndex = newIndex;
+
+                // Calculate offset but ensure we don't scroll past the content
+                let offset = -(carousel.currentIndex * step);
+                if (Math.abs(offset) > maxScroll) {
+                    offset = -maxScroll;
+                }
+
+                carousel.track.style.transform = `translateX(${offset}px)`;
+
+                setTimeout(() => {
+                    carousel.isAnimating = false;
+                    this.checkNavButtons(carouselId);
+                }, 600);
+            }
+        }
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlogCarousel();
+        });
+
+        // ================================
+        // INTEREST CARDS HOVER EFFECT
+        // ================================
+        const interestCards = document.querySelectorAll('.interest-card');
+        interestCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.15)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // ================================
+        // SMOOTH SCROLL BEHAVIOR
+        // ================================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // ================================
+        // KEYBOARD NAVIGATION
+        // ================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                const activeCarousel = document.activeElement?.closest('.blog-carousel-nav-btn');
+                if (activeCarousel) {
+                    activeCarousel.click();
+                }
+            } else if (e.key === 'ArrowRight') {
+                const activeCarousel = document.activeElement?.closest('.blog-carousel-nav-btn');
+                if (activeCarousel) {
+                    activeCarousel.click();
+                }
+            }
+        });
+
+    </script>

@@ -14,6 +14,8 @@ import { PageType } from "./modules/pages/schemas/page.schema";
 import { TourStatus } from "./modules/tours/schemas/tour.schema";
 import { MailService } from "./modules/mail/mail.service"
 import { CreateEnquiryDto } from "./modules/enquiry/dtos/enquiry.dto";
+import { DestinationsService } from "./modules/destinations/destinations.service"
+import { HeroSlidesService } from "./modules/hero-slide/hero-slides.service"
 
 @Controller()
 export class AppController {
@@ -24,60 +26,55 @@ export class AppController {
     private readonly categoriesService: CategoriesService,
     private readonly blogsService: BlogsService,
     private readonly reviewsService: ReviewsService,
+    private readonly heroSlidesService: HeroSlidesService,
     private readonly pagesService: PagesService,
     private readonly subscribersService: SubscribersService,
     private readonly mailService: MailService,
+    private readonly destinationsService: DestinationsService,
   ) {}
 
   @Get()
-  @Render("public/index")
-  async getHomePage(@Query('page') pageQuery: string = '1') { // Changed 'page' to 'pageQuery' to avoid conflict with `page` inside findAll return
-    const page = parseInt(pageQuery, 10);
-    const limit = 4; // Display 4 blogs on the homepage
+@Render("public/index")
+async getHomePage(@Query('page') pageQuery: string = '1') {
+  const page = parseInt(pageQuery, 10);
+  const limit = 4;
 
-    // Fetch About Us page
-    const aboutUsPage = await this.pagesService.findOneByType(PageType.ABOUT); 
-    
+  const heroSlides = await this.heroSlidesService.findAll();
+  const popularTours = await this.toursService.findFeatured(16);
+
+  // FIX: Extract data array from destinations result
+  const destResult = await this.destinationsService.findAll();
+  const destinations = Array.isArray(destResult) ? destResult : (destResult.data || []);
+
+  const aboutUsPage = await this.pagesService.findOneByType(PageType.ABOUT); 
   
-    // Fetch actual featured tours using findFeatured method
-    const featuredTours = await this.toursService.findFeatured();
-    
-    
-  
-    // Fetch all countries for destinations
-    const result = await this.countriesService.findAll();
-    const countries = Array.isArray(result) ? result : result.data ?? [];
+  // FIX: Extract data array from countries result
+  const countryResult = await this.countriesService.findAll();
+  const countries = Array.isArray(countryResult) ? countryResult : (countryResult.data || []);
 
-    
-    // Fetch approved reviews (if used on the homepage)
-    const reviews = await this.reviewsService.findApproved();
+  const reviews = await this.reviewsService.findApproved();
 
-    // --- FIX: Pass queryOptions object to blogsService.findAll ---
-    const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll({
-      page: page,
-      limit: limit,
-      sortBy: 'newest', // Ensure you get the latest blogs
-      status: BlogStatus.VISIBLE, // <--- CHANGED FROM 'published' to BlogStatus.VISIBLE
-    });
+  const trendingBlogs = await this.blogsService.findPopular(10);
 
-    return {
-      title: "Home",
-      aboutUsPage,
-      featuredTours,
-      countries,
-      blogs,
-      reviews,
-      currentPage, // Pass these directly from the service response
-      totalPages,
-      layout: "layouts/public",
-      seo: {
-        description: aboutUsPage.seoDescription,
-        keywords: aboutUsPage.seoKeywords,
-        canonicalUrl: aboutUsPage.seoCanonicalUrl,
-        ogImage: aboutUsPage.seoOgImage || aboutUsPage.coverImage,
+  return {
+    title: "Home",
+    heroSlides, 
+    popularTours,
+    destinations, // Now a guaranteed array
+    countries,    // Now a guaranteed array
+    aboutUsPage,
+    trendingBlogs,
+    reviews,
+    layout: "layouts/public",
+    seo: {
+      description: aboutUsPage?.seoDescription,
+      keywords: aboutUsPage?.seoKeywords,
+      canonicalUrl: aboutUsPage?.seoCanonicalUrl,
+      ogImage: aboutUsPage?.seoOgImage || aboutUsPage?.coverImage,
     },
-    };
-  }
+  };
+}
+
 
   @Get('page/:slug')
   @Render('public/page')
@@ -141,7 +138,7 @@ export class AppController {
 
   // --- NEW: GET route to render the enquiry page ---
   @Get('enquiry')
-  @Render('public/enquiry') // Assuming your EJS file is public/enquiry.ejs
+  @Render('public/pages/enquiry') // Assuming your EJS file is public/enquiry.ejs
   getEnquiryPage() {
 
     const seoDescription = "Send us your inquiry at Feel Africa Safaris for unforgettable safari experiences in Uganda, Kenya, Tanzania, and Rwanda. Get a custom quote for your dream adventure with Feel Africa Safaris.";
@@ -175,39 +172,9 @@ export class AppController {
     }
   }
 
-  @Get('impact')
-  @Render('public/impact')
-  async getImpactPage() { // Make it async
-    // Fetch the page with type COMMUNITY
-    const impactPage = await this.pagesService.findOneByType(PageType.COMMUNITY);
-
-    // If the page is not found, you might want to throw an error or redirect
-    if (!impactPage) {
-      // You can either throw a NotFoundException which NestJS will handle
-      // or redirect to a 404 page, or render a generic "page not found" view.
-      throw new NotFoundException('Impact page not found.');
-      // Or, for a user-friendly redirect:
-      // return res.redirect('/404'); // Assuming you have a 404 page
-    }
-
-    // Pass the page data to the EJS template
-    return {
-      title: impactPage.seoTitle || `${impactPage.title}`,
-      impactPage, // Pass the entire page object
-      layout: "layouts/public",
-      seo: {
-        title: impactPage.seoTitle || `${impactPage.title}`,
-        description: impactPage.seoDescription || impactPage.description,
-        keywords: impactPage.seoKeywords,
-        canonicalUrl: impactPage.seoCanonicalUrl,
-        ogImage: impactPage.seoOgImage || impactPage.coverImage,
-      },
-    };
-  }
-
   // --- NEW: GET route to render the Terms and Conditions page ---
-  @Get('terms')
-  @Render('public/terms') // Assuming your EJS file is public/terms.ejs
+  @Get('terms-conditions') 
+  @Render('public/pages/terms-conditions') // Assuming your EJS file is public/terms.ejs
   async getTermsPage() { // Make it async
     // Fetch the page with type TERMS
     const termsPage = await this.pagesService.findOneByType(PageType.TERMS);
@@ -232,8 +199,8 @@ export class AppController {
     };
   }
 
-  @Get('privacy-policy')
-  @Render('public/privacy-policy') // Assuming your EJS file is public/privacy-policy.ejs
+  @Get('travel-policy')
+  @Render('public/pages/travel-policy') // Assuming your EJS file is public/privacy-policy.ejs
   async getPrivacyPolicyPage() { // Make it async
     // Fetch the page with type PRIVACY
     const privacyPage = await this.pagesService.findOneByType(PageType.PRIVACY);
@@ -260,7 +227,7 @@ export class AppController {
 
   
   @Get('about')
-  @Render('public/about') // Assuming your EJS file is public/about.ejs
+  @Render('public/pages/about') // Assuming your EJS file is public/about.ejs
   getaboutPage() {
 
     const seoDescription = "Learn about Feel Africa Safaris, your trusted partner for authentic and unforgettable safari adventures across Uganda, Kenya, Tanzania, Rwanda and many other African countries.";

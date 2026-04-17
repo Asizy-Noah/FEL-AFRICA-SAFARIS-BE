@@ -1,0 +1,54 @@
+<div class="dashboard-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800">Safari Partners</h2>
+        <a href="/partners/dashboard/add" class="btn btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50 mr-2"></i>Add New Partner
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Logo</th>
+                            <th>Partner Name</th>
+                            <th>Website</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (partners && partners.length > 0) { %>
+                            <% partners.forEach(partner => { %>
+                                <tr>
+                                    <td class="text-center">
+                                        <% if (partner.logo) { %>
+                                            <img src="<%= partner.logo %>" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
+                                        <% } else { %>
+                                            <i class="fas fa-user-tie fa-2x text-light"></i>
+                                        <% } %>
+                                    </td>
+                                    <td class="align-middle"><strong><%= partner.name %></strong></td>
+                                    <td class="align-middle">
+                                        <a href="<%= partner.url %>" target="_blank"><%= partner.url %></a>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="btn-group">
+                                            <a href="/partners/dashboard/edit/<%= partner._id %>" class="btn btn-sm btn-info"><i class="fas fa-edit"></i></a>
+                                            <form action="/partners/dashboard/delete/<%= partner._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this partner?')">
+                                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr><td colspan="4" class="text-center">No partners found.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

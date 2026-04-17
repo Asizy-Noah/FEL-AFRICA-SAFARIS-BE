@@ -1,0 +1,807 @@
+<!-- Hero Section (Include your header here) -->
+    <section id="home" class="generic-hero-section">
+        <div class="generic-hero-content">
+            <h1 class="generic-hero-title">
+                <%= selectedCountry.name %> <span class="highlight-gold">Blogs</span>
+            </h1>
+        </div>
+        <div class="generic-hero-overlay"></div>
+        <img src="/img/nat-1-large.jpg" alt="African Elephant Safari" class="hero-bg">
+        <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- MAIN CONTENT -->
+    <main class="country-blog-container">
+        <div class="country-blog-wrapper">
+            <section class="articles-section">
+                <div class="articles-header">
+                    <h2>All <%= selectedCountry.name %> Articles</h2>
+                    <div class="filter-container">
+                    <label for="category-filter">Sort by Category:</label>
+                    <select id="category-filter" class="category-dropdown">
+                        <option value="all">All Categories</option>
+                        <% categories.forEach(cat => { %>
+                            <option value="<%= cat._id %>" <%= selectedCategory == cat._id ? 'selected' : '' %>>
+                                <%= cat.name %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+                </div>
+
+                <div class="blog-cards-grid" id="blog-grid">
+                    <% if (blogs && blogs.length > 0) { %>
+                        <% blogs.forEach(blog => { 
+                            // Create a comma-separated string of all category IDs for this blog
+                            let catIds = [];
+                            if (blog.categories && blog.categories.length > 0) {
+                                catIds = blog.categories.map(c => c._id || c);
+                            } else if (blog.category) {
+                                catIds = [blog.category._id || blog.category];
+                            }
+                            const dataCategoryString = catIds.join(',');
+                        %>
+                            <div 
+                            class="blog-card-link" 
+                            data-categories="<%= dataCategoryString %>"> <article class="blog-card">
+                                    <div class="blog-card-image">
+                                        <img src="<%= blog.coverImage %>" alt="<%= blog.title %>">
+                                    </div>
+                                    <div class="blog-card-content">
+                                        <h3 class="blog-card-title"><%= blog.title %></h3>
+                                        <p class="blog-card-excerpt">
+                                            <% 
+                                            // 1. Find the section with type 'intro'
+                                            const introSection = blog.sections ? blog.sections.find(s => s.type === 'intro') : null;
+                                            
+                                            // 2. Get the body content or fallback to the excerpt field or a default string
+                                            let rawContent = '';
+                                            if (introSection && introSection.body) {
+                                                rawContent = introSection.body;
+                                            } else if (blog.excerpt) {
+                                                rawContent = blog.excerpt;
+                                            }
+
+                                            // 3. Clean HTML tags and truncate to 100 characters
+                                            const cleanText = rawContent.replace(/<[^>]*>?/gm, '').trim();
+                                            const truncatedText = cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
+                                            %>
+                                            <%= truncatedText || 'Explore more about this adventure...' %>
+                                        </p>
+                                        <div class="blog-card-meta">
+                                            <div class="blog-footer">
+                                                <a href="/blogs/<%= blog.slug %>" class="view-btn">Read More</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <div class="pagination-wrapper" id="pagination-container" style="display: none;">
+                    <button class="pagination-btn pagination-prev" id="prevPage">← Previous</button>
+                    <div class="pagination-numbers" id="pageNumbers"></div>
+                    <button class="pagination-btn pagination-next" id="nextPage">Next →</button>
+                </div>
+            </section>
+
+            <aside class="country-sidebar">
+                <div class="sidebar-widget search-widget">
+                    <h4 class="widget-title">Search <%= selectedCountry.name %> Blogs</h4>
+                    <form class="blog-search-form" action="/blogs/country/<%= selectedCountry._id %>" method="GET">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            placeholder="Search <%= selectedCountry.name %> blogs..." 
+                            class="search-input"
+                            value="<%= searchQuery %>"
+                        >
+                        <button type="submit" class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="sidebar-widget attractions-widget">
+                    <h4 class="widget-title">Top <%= selectedCountry.name %> Attractions</h4>
+                    <div class="attractions-list">
+                        <% attractions.forEach(item => { %>
+                            <div class="attraction-card">
+                                <div class="attraction-image">
+                                    <img src="<%= item.coverImage || '/images/default-dest.jpg' %>" alt="<%= item.name %>">
+                                </div>
+                                <h5 class="attraction-title"><%= item.name %></h5>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        // ================================
+        // COUNTRY BLOG PAGE - FUNCTIONALITY
+        // ================================
+
+        const POSTS_PER_PAGE = 6;
+
+        class CountryBlogManager {
+            constructor() {
+                this.currentPage = 1;
+                this.allCards = [];
+                this.filteredCards = [];
+                this.init();
+            }
+
+            init() {
+                this.cacheElements();
+                // Capture all cards rendered by EJS
+                this.allCards = Array.from(document.querySelectorAll('.blog-card-link'));
+                // Start with all blogs visible
+                this.filteredCards = [...this.allCards];
+                
+                this.setupEventListeners();
+                this.displayPage(); 
+            }
+
+            cacheElements() {
+                this.filterDropdown = document.getElementById('category-filter');
+                this.cardsGrid = document.getElementById('blog-grid');
+                this.paginationContainer = document.getElementById('pagination-container');
+                this.prevBtn = document.getElementById('prevPage');
+                this.nextBtn = document.getElementById('nextPage');
+                this.pageNumbersCont = document.getElementById('pageNumbers');
+            }
+
+            setupEventListeners() {
+                this.filterDropdown.addEventListener('change', () => {
+                    this.currentPage = 1;
+                    this.filterLogic();
+                });
+
+                this.prevBtn.addEventListener('click', () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.displayPage();
+                        this.scrollToTop();
+                    }
+                });
+
+                this.nextBtn.addEventListener('click', () => {
+                    const maxPages = Math.ceil(this.filteredCards.length / POSTS_PER_PAGE);
+                    if (this.currentPage < maxPages) {
+                        this.currentPage++;
+                        this.displayPage();
+                        this.scrollToTop();
+                    }
+                });
+            }
+
+            filterLogic() {
+                const selectedCatId = this.filterDropdown.value;
+                
+                if (selectedCatId === 'all') {
+                    this.filteredCards = [...this.allCards];
+                } else {
+                    this.filteredCards = this.allCards.filter(card => {
+                        // Get the string of IDs we stored: "id1,id2,id3"
+                        const blogCatString = card.getAttribute('data-categories') || "";
+                        const blogCatArray = blogCatString.split(',');
+                        // Check if the selected category is one of the blog's categories
+                        return blogCatArray.includes(selectedCatId);
+                    });
+                }
+                this.displayPage();
+            }
+
+            displayPage() {
+                const start = (this.currentPage - 1) * POSTS_PER_PAGE;
+                const end = start + POSTS_PER_PAGE;
+                const pageCards = this.filteredCards.slice(start, end);
+
+                this.cardsGrid.innerHTML = '';
+                
+                if (pageCards.length === 0) {
+                    this.cardsGrid.innerHTML = '<div class="no-results"><p>No articles found for this selection.</p></div>';
+                } else {
+                    pageCards.forEach(card => {
+                        card.style.display = 'block'; 
+                        this.cardsGrid.appendChild(card);
+                    });
+                }
+
+                this.updatePaginationUI();
+            }
+
+            updatePaginationUI() {
+                const totalItems = this.filteredCards.length;
+                const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE);
+
+                // Hide pagination container if 6 or fewer blogs
+                if (totalItems <= POSTS_PER_PAGE) {
+                    this.paginationContainer.style.display = 'none';
+                    return;
+                }
+
+                this.paginationContainer.style.display = 'flex';
+
+                // Prev only shows after page 1; Next hides on last page
+                this.prevBtn.style.visibility = this.currentPage > 1 ? 'visible' : 'hidden';
+                this.nextBtn.style.visibility = this.currentPage < totalPages ? 'visible' : 'hidden';
+
+                this.pageNumbersCont.innerHTML = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    const span = document.createElement('span');
+                    span.innerText = i;
+                    span.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
+                    span.onclick = () => {
+                        this.currentPage = i;
+                        this.displayPage();
+                        this.scrollToTop();
+                    };
+                    this.pageNumbersCont.appendChild(span);
+                }
+            }
+
+            scrollToTop() {
+                window.scrollTo({
+                    top: this.cardsGrid.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => new CountryBlogManager());
+    </script>
+
+    <style>
+
+        /* ================================
+        COUNTRY BLOG PAGE - MAIN LAYOUT
+        ================================ */
+        .country-blog-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+        background: var(--color-background);
+        }
+
+        .country-blog-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 3rem;
+        }
+
+        /* ================================
+        ARTICLES SECTION
+        ================================ */
+        .articles-section {
+        background: var(--color-white);
+        padding: 2rem;
+        border: 1px solid var(--color-border);
+        }
+
+        .articles-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        }
+
+        .articles-header h2 {
+        font-size: 1.8rem;
+        color: var(--color-foreground);
+        font-weight: 700;
+        margin: 0;
+        }
+
+        /* FILTER SECTION */
+        .filter-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        }
+
+        .filter-container label {
+        font-weight: 600;
+        color: var(--color-foreground);
+        white-space: nowrap;
+        }
+
+        .category-dropdown {
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--color-border);
+        background: var(--color-white);
+        color: var(--color-foreground);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        }
+
+        .category-dropdown:hover {
+        border-color: var(--color-secondary);
+        background: #faf8f3;
+        }
+
+        .category-dropdown:focus {
+        outline: none;
+        border-color: var(--color-secondary);
+        box-shadow: 0 0 0 3px rgba(230, 162, 60, 0.1);
+        }
+
+        /* ================================
+        BLOG CARDS GRID
+        ================================ */
+        .blog-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin-bottom: 3rem;
+        }
+
+        .blog-card-link {
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .blog-card {
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .blog-card-link:hover .blog-card {
+        border-color: var(--color-secondary);
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-8px);
+        }
+
+        .blog-card-image {
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+        background: var(--color-light-gray);
+        }
+
+        .blog-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .blog-card-link:hover .blog-card-image img {
+        transform: scale(1.08);
+        }
+
+        .blog-card-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        }
+
+        .blog-card-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--color-foreground);
+        margin: 0 0 1rem 0;
+        line-height: 1.4;
+        }
+
+        .blog-card-excerpt {
+        font-size: 0.95rem;
+        color: #666;
+        margin: 0 0 1.5rem 0;
+        line-height: 1.6;
+        flex: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        }
+
+        .blog-card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-top: 1rem;
+        border-top: 1px solid var(--color-border);
+        font-size: 0.85rem;
+        }
+
+        .blog-category {
+        padding: 0.4rem 0.8rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        }
+
+        .wildlife-tag {
+        background: #e8f5e9;
+        color: #2e7d32;
+        }
+
+        .adventure-tag {
+        background: #fff3e0;
+        color: #e65100;
+        }
+
+        .culture-tag {
+        background: #f3e5f5;
+        color: #6a1b9a;
+        }
+
+        .photography-tag {
+        background: #e0f2f1;
+        color: #00695c;
+        }
+
+        .itinerary-tag {
+        background: #fce4ec;
+        color: #c2185b;
+        }
+
+        .blog-date {
+        color: #999;
+        font-style: italic;
+        }
+
+        /* ================================
+        PAGINATION
+        ================================ */
+        .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--color-border);
+        }
+
+        .pagination-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--color-white);
+        border: 2px solid var(--color-border);
+        color: var(--color-foreground);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+        background: var(--color-secondary);
+        border-color: var(--color-secondary);
+        color: var(--color-white);
+        transform: scale(1.05);
+        }
+
+        .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        }
+
+        .pagination-numbers {
+        display: flex;
+        gap: 0.5rem;
+        }
+
+        .pagination-number {
+        min-width: 40px;
+        height: 40px;
+        padding: 0;
+        background: var(--color-white);
+        border: 2px solid var(--color-border);
+        color: var(--color-foreground);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        }
+
+        .pagination-number:hover:not(.active) {
+        border-color: var(--color-secondary);
+        background: #faf8f3;
+        }
+
+        .pagination-number.active {
+        background: var(--color-secondary);
+        border-color: var(--color-secondary);
+        color: var(--color-white);
+        }
+
+        /* ================================
+        SIDEBAR
+        ================================ */
+        .country-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        }
+
+        .sidebar-widget {
+        background: var(--color-white);
+        border: 1px solid var(--color-border);
+        padding: 1.5rem;
+        }
+
+        .widget-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--color-foreground);
+        margin: 0 0 1.5rem 0;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--color-secondary);
+        }
+
+        /* SEARCH WIDGET */
+        .blog-search-form {
+        display: flex;
+        gap: 0.5rem;
+        }
+
+        .search-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--color-border);
+        background: var(--color-white);
+        color: var(--color-foreground);
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-input:focus {
+        outline: none;
+        border-color: var(--color-secondary);
+        box-shadow: 0 0 0 3px rgba(230, 162, 60, 0.1);
+        }
+
+        .search-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--color-secondary);
+        border: 2px solid var(--color-secondary);
+        color: var(--color-white);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-btn:hover {
+        background: #d68f2e;
+        border-color: #d68f2e;
+        transform: scale(1.02);
+        }
+
+        /* ATTRACTIONS WIDGET */
+        .attractions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        }
+
+        .attraction-card {
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .attraction-image {
+        width: 100%;
+        height: 120px;
+        overflow: hidden;
+        background: var(--color-light-gray);
+        margin-bottom: 0.8rem;
+        }
+
+        .attraction-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .attraction-card:hover .attraction-image img {
+        transform: scale(1.08);
+        }
+
+        .attraction-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--color-foreground);
+        margin: 0;
+        line-height: 1.4;
+        transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .attraction-card:hover .attraction-title {
+        color: var(--color-secondary);
+        }
+
+        /* ================================
+        RESPONSIVE DESIGN
+        ================================ */
+        @media (max-width: 1024px) {
+        .country-blog-wrapper {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .articles-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .blog-cards-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .country-sidebar {
+            flex-direction: row;
+            gap: 2rem;
+        }
+
+        .sidebar-widget {
+            flex: 1;
+        }
+        }
+
+        @media (max-width: 768px) {
+        .country-blog-container {
+            padding: 2rem 1rem;
+        }
+
+        .articles-section {
+            padding: 1.5rem;
+        }
+
+        .articles-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .articles-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .blog-cards-grid {
+            gap: 1.5rem;
+        }
+
+        .blog-card-image {
+            height: 200px;
+        }
+
+        .blog-card-content {
+            padding: 1rem;
+        }
+
+        .blog-card-title {
+            font-size: 1.1rem;
+        }
+
+        .country-sidebar {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .filter-container {
+            width: 100%;
+        }
+
+        .category-dropdown {
+            width: 100%;
+        }
+
+        .pagination-wrapper {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-numbers {
+            order: 3;
+            width: 100%;
+            justify-content: center;
+        }
+        }
+
+        @media (max-width: 576px) {
+        .country-blog-container {
+            padding: 1.5rem 1rem;
+        }
+
+        .articles-section {
+            padding: 1rem;
+        }
+
+        .articles-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .blog-cards-grid {
+            gap: 1rem;
+        }
+
+        .blog-card-image {
+            height: 180px;
+        }
+
+        .blog-card-content {
+            padding: 0.75rem;
+        }
+
+        .blog-card-title {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .blog-card-excerpt {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            -webkit-line-clamp: 2;
+        }
+
+        .blog-card-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .filter-container {
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+            gap: 0.5rem;
+        }
+
+        .category-dropdown {
+            width: 100%;
+        }
+
+        .sidebar-widget {
+            padding: 1rem;
+        }
+
+        .widget-title {
+            font-size: 1rem;
+        }
+
+        .attraction-image {
+            height: 100px;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .pagination-number {
+            min-width: 36px;
+            height: 36px;
+            font-size: 0.9rem;
+        }
+        }
+
+    </style>

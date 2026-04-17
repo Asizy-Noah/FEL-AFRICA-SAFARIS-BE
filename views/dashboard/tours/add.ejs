@@ -25,15 +25,19 @@
 
                 <div class="form-group">
                 <label for="coverImage">Upload Cover Image</label>
-                <div class="file-upload-container row">
-                    <div class="col-md-6">
-                        <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
-                        <div class="file-upload-box">
+                <div class="file-upload-container">
+                    <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <div class="upload-icon">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Drag & drop image or click to browse</span>
                         </div>
+                        <h4 class="upload-title">Add Cover Image</h4>
+                        <p class="upload-text">Drag & drop image here or click to browse</p>
+                        <small class="upload-hint">Recommended: 1200x600px (2:1 ratio), Max 5MB</small>
                     </div>
-                    <div class="col-md-6"><div class="file-preview" id="imagePreview"></div></div>
+                    <div class="file-preview" id="imagePreview">
+                        <img src="" alt="Image Preview" style="display: none;">
+                    </div>
                 </div>
                 </div>
             </div>
@@ -42,43 +46,75 @@
 
         <div class="form-section">
             <div class="form-row">
-                <div class="form-group col-md-3">
-                    <label for="country">Country</label>
-                    <select id="country" name="country" class="form-control" required>
-                        <option value="">Select Country</option>
-                        <% countries.forEach(function(country) { %>
-                            <option value="<%= country._id %>" <%= (typeof oldInput !== 'undefined' && oldInput.country && oldInput.country.toString() === country._id.toString()) ? 'selected' : '' %>>
-                                <%= country.name %>
-                            </option>
-                        <% }); %>
-                    </select>
-                </div>
-
-                <div class="form-group col-md-3">
-                    <label for="category">Categories</label>
-                    <select id="category" name="category" class="form-control" multiple required style="height:120px;">
-                        <% // Categories will be loaded dynamically via JavaScript or server-side. %>
-                    </select>
-                </div>
-
-                <div class="form-group col-md-3">
-                    <label for="destinations">Destinations</label>
-                    <select id="destinations" name="destinations" class="form-control" multiple style="height:120px;">
-                        <option value="">Select Destinations</option>
-                        <% if (typeof destinations !== 'undefined') { %>
-                            <% destinations.forEach(function(dest) { %>
-                                <option value="<%= dest._id %>"><%= dest.name %></option>
+                <div class="form-group col-md-4">
+                    <label>Countries</label>
+                    <div class="multi-select-container" id="countryContainer">
+                        <div class="selected-tags-container">
+                            <input type="text" class="tag-input-field" placeholder="Search countries..." autocomplete="off">
+                        </div>
+                        <div class="dropdown-list">
+                            <% countries.forEach(function(country) { %>
+                                <div class="dropdown-item" data-id="<%= country._id %>">
+                                    <%= country.name %>
+                                </div>
                             <% }); %>
-                        <% } %>
-                    </select>
+                        </div>
+                        <select name="countries" class="hidden-select" multiple required>
+                            <% if (typeof tour !== 'undefined' && tour.countries) { %>
+                                <% tour.countries.forEach(c => { %>
+                                    <option value="<%= c._id %>" selected><%= c.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group col-md-3">
-                    <label for="days">Number of Days</label>
+                <div class="form-group col-md-4">
+                    <label>Categories</label>
+                    <div class="multi-select-container" id="categoryContainer">
+                        <div class="selected-tags-container">
+                            <input type="text" class="tag-input-field" placeholder="Select Country first..." autocomplete="off">
+                        </div>
+                        <div class="dropdown-list"></div>
+                        <select name="categories" class="hidden-select" multiple required>
+                            <% if (typeof tour !== 'undefined' && tour.categories) { %>
+                                <% tour.categories.forEach(cat => { %>
+                                    <option value="<%= cat._id %>" selected><%= cat.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label>Destinations</label>
+                    <div class="multi-select-container" id="destinationContainer">
+                        <div class="selected-tags-container">
+                            <input type="text" class="tag-input-field" placeholder="Select Categories first..." autocomplete="off">
+                        </div>
+                        <div class="dropdown-list"></div>
+                        <select name="destinations" class="hidden-select" multiple required>
+                            <% if (typeof tour !== 'undefined' && tour.destinations) { %>
+                                <% tour.destinations.forEach(d => { %>
+                                    <option value="<%= d._id %>" selected><%= d.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-4"> <label for="days">Number of Days</label>
                     <input type="number" id="days" name="days" class="form-control" min="1" value="<%= typeof oldInput !== 'undefined' ? oldInput.days : '' %>" required>
                 </div>
 
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-4">
+                    <label for="groupSize">Number of Travelers (Max)</label>
+                    <input type="number" id="groupSize" name="groupSize" class="form-control" min="1" value="<%= typeof oldInput !== 'undefined' ? oldInput.groupSize : '1' %>" required>
+                </div>
+
+                <div class="form-group col-md-4">
                     <label for="price">Price ($)</label>
                     <input type="number" id="price" name="price" class="form-control" min="0" step="0.01" value="<%= typeof oldInput !== 'undefined' ? oldInput.price : '' %>" required>
                 </div>
@@ -201,6 +237,15 @@
         </div>
 
         <div class="form-section">
+            <h3 class="section-title">Additional Information</h3>
+            <div class="form-group">
+                <label for="additionalInfo">Important Notes / Extra Info</label>
+                <textarea id="additionalInfo" name="additionalInfo" class="form-control" rows="5"><%= typeof oldInput !== 'undefined' ? oldInput.additionalInfo : '' %></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
             <h3 class="section-title">SEO Information</h3>
 
             <div class="form-group">
@@ -227,98 +272,130 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const countrySelect = document.getElementById('country');
-    const categorySelect = document.getElementById('category');
+    document.addEventListener('DOMContentLoaded', () => {
 
-    
-    function filterCategories() {
-        const selectedCountryId = countrySelect.value;
-       
+    const setupMultiselectUI = (containerId) => {
+        const container = document.getElementById(containerId);
+        const input = container.querySelector('.tag-input-field');
+        const dropdown = container.querySelector('.dropdown-list');
+        const realSelect = container.querySelector('.hidden-select');
+        const tagsContainer = container.querySelector('.selected-tags-container');
 
-        // Clear existing categories (except the default "Select Category")
-        categorySelect.innerHTML = '<option value="">Select Category</option>';
-       
-
-        if (selectedCountryId) {
-            const apiUrl = `/api/categories/by-country/${selectedCountryId}`;
-          
-
-            fetch(apiUrl) // Call your new API endpoint
-                .then(response => {
-                   
-                    if (!response.ok) {
-                        // Log the full response status and text for more details on error
-                        console.error('Frontend Script: Network response was not ok. Status:', response.status, 'Status Text:', response.statusText);
-                        // You can also try to parse response as text to see backend error message
-                        return response.text().then(text => { throw new Error('HTTP error ' + response.status + ': ' + text); });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                   
-
-                    if (data.data && Array.isArray(data.data)) { // Ensure data.data is an array
-                        
-                        if (data.data.length === 0) {
-                            console.warn('Frontend Script: No categories found for this country.');
-                        }
-
-                            data.data.forEach(category => {
-                                const option = document.createElement('option');
-                                option.value = category._id;
-                                option.textContent = category.name;
-                                categorySelect.appendChild(option);
-                            });
-
-                            // Attempt to re-select categories if oldInput exists (support array or single value)
-                            let oldSelectedCategories = <%= JSON.stringify(typeof oldInput !== 'undefined' && oldInput.category ? oldInput.category : []) %>;
-                            if (!Array.isArray(oldSelectedCategories)) {
-                                oldSelectedCategories = [oldSelectedCategories];
-                            }
-
-                            if (oldSelectedCategories.length > 0) {
-                                Array.from(categorySelect.options).forEach(opt => {
-                                    if (oldSelectedCategories.includes(opt.value)) opt.selected = true;
-                                });
-                            }
-                    } else {
-                        
-                    }
-                })
-                .catch(error => {
-                   
-                });
-        } else {
-           
-        }
-    }
-
-    // Event listener for country select change
-    countrySelect.addEventListener('change', filterCategories);
-    
-
-    // Initial call to filter categories based on any pre-selected country (e.g., from oldInput)
-    // This is crucial for when the page loads with old input from a validation error.
-    if (countrySelect.value) { // Only run if a country is already selected
-       
-        filterCategories();
-    } else {
-        
-    }
-    // Pre-select destinations if old input is present (destinations select is rendered server-side)
-    const destinationsSelect = document.getElementById('destinations');
-    if (destinationsSelect) {
-        let oldSelectedDestinations = <%= JSON.stringify(typeof oldInput !== 'undefined' && oldInput.destinations ? oldInput.destinations : []) %>;
-        if (!Array.isArray(oldSelectedDestinations)) {
-            oldSelectedDestinations = [oldSelectedDestinations];
-        }
-
-        if (oldSelectedDestinations.length > 0) {
-            Array.from(destinationsSelect.options).forEach(opt => {
-                if (oldSelectedDestinations.includes(opt.value)) opt.selected = true;
+        // Function to refresh the visible tags
+        const refreshTags = () => {
+            tagsContainer.querySelectorAll('.country-tag').forEach(t => t.remove());
+            Array.from(realSelect.selectedOptions).forEach(opt => {
+                const tag = document.createElement('span');
+                tag.className = 'country-tag';
+                tag.innerHTML = `${opt.text} <span class="remove-tag" data-id="${opt.value}">&times;</span>`;
+                
+                tag.querySelector('.remove-tag').onclick = () => {
+                    opt.selected = false;
+                    realSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    refreshTags();
+                };
+                tagsContainer.insertBefore(tag, input);
             });
+        };
+
+        // Click on dropdown items
+        dropdown.onclick = (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            
+            const id = item.dataset.id;
+            let opt = realSelect.querySelector(`option[value="${id}"]`);
+            if (!opt) {
+                opt = new Option(item.textContent.trim(), id, true, true);
+                realSelect.add(opt);
+            } else {
+                opt.selected = true;
+            }
+            
+            input.value = '';
+            dropdown.style.display = 'none';
+            refreshTags();
+            realSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        // Search logic
+        input.oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(val) ? 'block' : 'none';
+            });
+            dropdown.style.display = 'block';
+        };
+
+        input.onfocus = () => { if(dropdown.children.length > 0) dropdown.style.display = 'block'; };
+
+        // Initial tag draw
+        refreshTags();
+    };
+
+    // Initialize UI for all 3
+    setupMultiselectUI('countryContainer');
+    setupMultiselectUI('categoryContainer');
+    setupMultiselectUI('destinationContainer');
+
+    // --- CASCADING API LOGIC ---
+
+    const updateDependents = async (containerId, apiUrl, ids) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const dropdown = container.querySelector('.dropdown-list');
+        const input = container.querySelector('.tag-input-field');
+        
+        // Show a "Loading..." message
+        dropdown.innerHTML = '<div class="dropdown-item">Loading...</div>';
+        dropdown.style.display = 'block';
+
+        try {
+            const res = await fetch(`${apiUrl}?ids=${ids.join(',')}`);
+            const data = await res.json();
+            
+            // Clear dropdown
+            dropdown.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item">No results found for selected countries</div>';
+                input.placeholder = "No items available";
+            } else {
+                // IMPORTANT: Inject the new items into the dropdown
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.dataset.id = item._id;
+                    div.textContent = item.name;
+                    dropdown.appendChild(div);
+                });
+                input.placeholder = "Search...";
+            }
+        } catch (err) {
+            console.error("API Error:", err);
+            dropdown.innerHTML = '<div class="dropdown-item text-danger">Error loading data</div>';
         }
+    };
+
+    // --- CASCADING LISTENERS ---
+
+    const countrySelect = document.querySelector('#countryContainer .hidden-select');
+    const categorySelect = document.querySelector('#categoryContainer .hidden-select');
+
+    // When Countries Change -> Update Categories AND Destinations
+    countrySelect.addEventListener('change', function() {
+    const ids = Array.from(this.selectedOptions).map(o => o.value);
+    if (ids.length > 0) {
+        // This MUST match the @Get('api/by-countries') in the controller
+        updateDependents('categoryContainer', '/categories/api/by-countries', ids);
+        
+        // This one is likely working because your Destinations controller already has 'by-countries'
+        updateDependents('destinationContainer', '/destinations/api/by-countries', ids);
     }
 });
+
+   
+});
 </script>
+

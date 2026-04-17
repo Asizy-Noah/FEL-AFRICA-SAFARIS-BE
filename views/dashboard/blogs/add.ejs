@@ -1,123 +1,519 @@
 <div class="dashboard-content">
-    <form id="addBlogForm" class="blog-form" action="/blogs/dashboard/add" method="POST" enctype="multipart/form-data">
+    <form id="addBlogForm" action="/blogs/dashboard/add" method="POST" enctype="multipart/form-data">
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="form-group col-md-8">
+                        <label><strong>Blog Title</strong></label>
+                        <input type="text" name="title" id="blogTitle" class="form-control form-control-lg" placeholder="Enter post title" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label><strong>Status</strong></label>
+                        <select name="status" class="form-control form-control-lg">
+                            <option value="visible">Visible</option>
+                            <option value="hidden">Hidden</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label><strong>Cover Image</strong></label>
+                    <input type="file" name="coverImage" class="form-control-file" accept="image/*" required>
+                </div>
+            </div>
+        </div>
+
         <div class="form-section">
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="blogTitle">Title</label>
-                    <input type="text" id="blogTitle" name="title" class="form-control" required
-                           value="<%= typeof oldInput !== 'undefined' ? oldInput.title || '' : '' %>">
+                    <label>Countries</label>
+                    <div class="multi-select-container" id="countryContainer">
+                        <div class="selected-tags-container">
+                            <input type="text" class="tag-input-field" placeholder="Search countries..." autocomplete="off">
+                        </div>
+                        <div class="dropdown-list">
+                            <% countries.forEach(function(country) { %>
+                                <div class="dropdown-item" data-id="<%= country._id %>">
+                                    <%= country.name %>
+                                </div>
+                            <% }); %>
+                        </div>
+                        <select name="countries" class="hidden-select" multiple required>
+                            <% if (typeof tour !== 'undefined' && tour.countries) { %>
+                                <% tour.countries.forEach(c => { %>
+                                    <option value="<%= c._id %>" selected><%= c.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group col-md-6">
-                    <label for="blogStatus">Status</label>
-                    <select id="blogStatus" name="status" class="form-control" required>
-                        <option value="visible" <%= typeof oldInput !== 'undefined' && oldInput.status === 'visible' ? 'selected' : '' %>>Visible Post</option>
-                        <option value="hidden" <%= typeof oldInput !== 'undefined' && oldInput.status === 'hidden' ? 'selected' : '' %>>Hidden Post</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="blogContent">Content</label>
-                <div id="blogContentEditor" class="editor-container blog-editor" style="height: 300px; border: 1px solid #ced4da; border-radius: 0.25rem;">
-                    <%= typeof oldInput !== 'undefined' ? oldInput.content || '' : '' %>
-                </div>
-                <input type="hidden" name="content" id="blogContent"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.content || '' : '' %>" required>
-            </div>
-
-            <div class="form-group">
-                <div class="form-group">
-                <label for="coverImage">Upload Featured Image</label>
-                <div class="row">
-                    <div class="col-md-6 file-upload-container ">
-                        <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
-                        <div class="file-upload-box">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Drag & drop image or click to browse</span>
+                    <label>Categories</label>
+                    <div class="multi-select-container" id="categoryContainer">
+                        <div class="selected-tags-container">
+                            <input type="text" class="tag-input-field" placeholder="Search categories..." autocomplete="off">
                         </div>
-                    </div>
-                    <div class="col-md-6"><div class="file-preview" id="imagePreview"></div></div>
+                        <div class="dropdown-list">
+                            <% categories.forEach(function(cat) { %>
+                                <div class="dropdown-item" data-id="<%= cat._id %>">
+                                    <%= cat.name %>
+                                </div>
+                            <% }); %>
+                        </div>
+                        <select name="categories" class="hidden-select" multiple required>
+                            <% if (typeof tour !== 'undefined' && tour.categories) { %>
+                                <% tour.categories.forEach(cat => { %>
+                                    <option value="<%= cat._id %>" selected><%= cat.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div> 
                 </div>
+            </div>
+
+        </div>
+
+        <div id="blogBuilder" class="mb-4"></div>
+
+        <div class="blog-toolbar sticky-bottom bg-white p-3 border shadow-lg mb-4 rounded">
+            <label class="d-block mb-2 text-primary"><strong><i class="fas fa-plus-circle"></i> Add Content Section:</strong></label>
+            <div class="btn-group flex-wrap">
+                <button type="button" class="btn btn-outline-primary" onclick="addBlock('intro')"><i class="fas fa-align-left"></i> Intro</button>
+                <button type="button" class="btn btn-outline-primary" onclick="addBlock('paragraph')"><i class="fas fa-paragraph"></i> Paragraph</button>
+                <button type="button" class="btn btn-outline-primary" onclick="addBlock('tour')"><i class="fas fa-shuttle-van"></i> Add Tour</button>
+                <button type="button" class="btn btn-outline-primary" onclick="addBlock('page')"><i class="fas fa-file-alt"></i> Add Page</button>
+                <button type="button" class="btn btn-outline-primary" onclick="addBlock('conclusion')"><i class="fas fa-flag-checkered"></i> Conclusion</button>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white"><strong>SEO & Meta Data</strong></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>SEO Title</label>
+                    <input type="text" name="seoTitle" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>SEO Description</label>
+                    <textarea name="seoDescription" class="form-control" rows="2"></textarea>
                 </div>
             </div>
         </div>
 
-        <div class="form-section">
-            <h3 class="section-title">SEO Information</h3>
-            <div class="form-group">
-                <label for="seoTitle">Meta Title</label>
-                <input type="text" id="seoTitle" name="seoTitle" class="form-control"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle || '' : '' %>">
-            </div>
-            <div class="form-group">
-                <label for="seoDescription">Meta Description</label>
-                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3" maxlength="150"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription || '' : '' %></textarea>
-                <small id="charCount">0 / 150</small>
-            </div>
-            <div class="form-group">
-                <label for="seoKeywords">Meta Keywords</label>
-                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords || '' : '' %>" >
-                
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='/blogs/dashboard'">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add Blog</button>
-        </div>
+        <button type="submit" class="btn btn-success btn-xl w-100 mb-5">PUBLISH BLOG POST</button>
     </form>
 </div>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- Quill.js Editor Initialization ---
-        var quill = new Quill('#blogContentEditor', {
-            theme: 'snow',
-            placeholder: 'Write your blog content here...',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    ['blockquote', 'code-block'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'script': 'sub'}, { 'script': 'super' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1'}],
-                    [{ 'direction': 'rtl' }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'font': [] }],
-                    [{ 'align': [] }],
-                    ['link', 'image', 'video'],
-                    ['clean']
-                ]
-            }
-        });
+let blockCount = 0;
+const builders = [];
 
-        var hiddenContentInput = document.getElementById('blogContent');
-        var initialContent = hiddenContentInput.value;
-        if (initialContent) {
-            quill.clipboard.dangerouslyPasteHTML(initialContent);
+function addBlock(type) {
+    const container = document.getElementById('blogBuilder');
+    const blockId = Date.now();
+    const index = blockCount;
+    let specificFields = '';
+
+    if (type === 'paragraph') {
+        specificFields = `
+            <input type="text" class="form-control mb-2 block-title" placeholder="Sub-heading (Optional)">
+            <div id="editor-${blockId}" class="quill-editor" style="height: 200px;"></div>
+            
+            <div class="attachment-section mt-4">
+                <label class="small text-muted font-weight-bold">ATTACH TO THIS PARAGRAPH:</label>
+                <div class="btn-group btn-group-sm d-flex flex-wrap mb-3">
+                    <button type="button" class="btn btn-outline-secondary" onclick="addAttachmentLink(${blockId}, 'tour', '/blogs/api/search-tours')"><i class="fas fa-shuttle-van"></i> Tours</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="addAttachmentLink(${blockId}, 'blog', '/blogs/api/search-blogs')"><i class="fas fa-rss"></i> Blogs</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="addAttachmentLink(${blockId}, 'destination', '/blogs/api/search-destinations')"><i class="fas fa-map-marker-alt"></i> Destinations</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="addAttachmentLink(${blockId}, 'category', '/blogs/api/search-categories')"><i class="fas fa-tags"></i> Categories</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="addAttachmentLink(${blockId}, 'country', '/blogs/api/search-countries')"><i class="fas fa-globe-africa"></i> Countries</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="addAttachmentLink(${blockId}, 'page', '/api/search-pages')"><i class="fas fa-file"></i> Pages</button>
+                </div>
+                <div id="attachment-containers-${blockId}"></div>
+            </div>
+        `;
+   } else if (type === 'tour' || type === 'page') {
+    specificFields = `
+        <div class="standalone-attachment-group">
+            <div class="selected-tags-container p-2 border rounded bg-light">
+                <label class="small">Search and Select ${type.toUpperCase()}</label>
+                <input type="text" class="tag-input-field w-100 remote-autocomplete" 
+                       data-api="${type === 'tour' ? '/blogs/api/search-tours' : '/blogs/api/search-pages'}"
+                       data-block="${blockId}" data-type="${type}" placeholder="Type to search...">
+                <div class="dropdown-list"></div>
+            </div>
+            <div class="selected-items-list d-flex flex-wrap gap-2 mt-2"></div>
+            <input type="hidden" name="sections[${index}][referenceId]" class="single-ref-input">
+        </div>
+    `;
+} else {
+        specificFields = `<div id="editor-${blockId}" class="quill-editor" style="height: 150px;"></div>`;
+    }
+
+    const blockHtml = `
+        <div class="blog-block card mb-4 shadow-sm border-left-primary" data-id="${blockId}" data-type="${type}">
+            <div class="card-header d-flex justify-content-between align-items-center py-2 bg-white">
+                <span class="">${type.toUpperCase()}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.blog-block').remove()">&times;</button>
+            </div>
+            <div class="card-body">
+                ${specificFields}
+                <input type="hidden" name="sections[${index}][type]" value="${type}">
+                <input type="hidden" name="sections[${index}][body]" class="block-body">
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', blockHtml);
+
+    if (type !== 'tour' && type !== 'page') {
+        const quill = new Quill(`#editor-${blockId}`, { theme: 'snow' });
+        builders.push({ id: `editor-${blockId}`, quill });
+    }
+
+    blockCount++;
+}
+
+/**
+ * Handles spawning a search box for specific attachment types within a paragraph
+ */
+function addAttachmentLink(blockId, type, apiUrl) {
+    const container = document.getElementById(`attachment-containers-${blockId}`);
+    const existing = container.querySelector(`[data-attach-type="${type}"]`);
+    
+    if (existing) return; // Don't add multiple search boxes for same type
+
+    const html = `
+        <div class="mt-2 mb-3 attachment-sub-group" data-attach-type="${type}">
+            <h6 class="small font-weight-bold text-uppercase border-bottom pb-1">Attach ${type}s:</h6>
+            <div class="selected-tags-container d-flex flex-wrap gap-2 p-2 border rounded bg-white position-relative">
+                <input type="text" class="tag-input-field remote-autocomplete" 
+                       data-block="${blockId}" data-type="${type}" data-api="${apiUrl}"
+                       placeholder="Search ${type}s...">
+                <div class="dropdown-list"></div>
+            </div>
+            <div class="selected-items-list d-flex flex-wrap gap-2 mt-2" id="list-${blockId}-${type}"></div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+/**
+ * Global Autocomplete Handler
+ */
+$(document).on('keyup', '.remote-autocomplete', function() {
+    const input = $(this);
+    const query = input.val();
+    const dropdown = input.siblings('.dropdown-list');
+    const apiUrl = input.data('api');
+
+    if (query.length < 2) {
+        dropdown.hide();
+        return;
+    }
+
+    $.getJSON(apiUrl, { q: query }, function(data) {
+        let html = '';
+        data.forEach(item => {
+            html += `<div class="dropdown-item" data-id="${item.id}" data-text="${item.text}">${item.text}</div>`;
+        });
+        dropdown.html(html).show();
+    });
+});
+
+$(document).on('click', '.dropdown-item', function() {
+    const item = $(this);
+    const id = item.data('id');
+    const text = item.data('text');
+    const container = item.closest('.selected-tags-container');
+    const input = container.find('.remote-autocomplete');
+    const type = input.data('type');
+
+    // FIX: Look for the list in Paragraph OR Standalone blocks
+    const displayList = input.closest('.attachment-sub-group, .standalone-attachment-group').find('.selected-items-list');
+
+    // Prevent duplicates
+    if (displayList.find(`[data-id="${id}"]`).length) {
+        item.closest('.dropdown-list').hide();
+        return;
+    }
+
+    // Create the blue tag (matching your paragraph style)
+    const tagHtml = `
+        <div class="country-tag" data-id="${id}" style="background: #007bff; color: white; padding: 4px 12px; border-radius: 15px; display: flex; align-items: center; font-size: 13px;">
+            ${text}
+            <span class="remove-tag" style="margin-left: 8px; cursor: pointer; font-weight: bold;" onclick="this.parentElement.remove()">&times;</span>
+            <input type="hidden" class="val-input" value="${id}">
+        </div>
+    `;
+
+    displayList.append(tagHtml);
+    
+    // Specifically for standalone blocks: Update the hidden referenceId input
+    const standaloneWrapper = input.closest('.standalone-attachment-group');
+    if (standaloneWrapper.length) {
+        standaloneWrapper.find('.single-ref-input').val(id);
+    }
+
+    input.val('');
+    item.closest('.dropdown-list').hide();
+});
+window.onload = () => addBlock('intro');
+
+// Add this inside your existing <script> tag
+$('#addBlogForm').on('submit', function(e) {
+    // 1. Sync Quill Editor Content to Hidden Body Inputs
+    builders.forEach(builder => {
+        const editorId = builder.id; // e.g., editor-12345
+        const blockId = editorId.replace('editor-', '');
+        const quill = builder.quill;
+        
+        // Find the hidden body input for THIS specific block and set its value
+        const blockContainer = $(`.blog-block[data-id="${blockId}"]`);
+        blockContainer.find('.block-body').val(quill.root.innerHTML);
+    });
+
+    // 2. Sync Sub-headings and Attachments for every block
+    $('.blog-block').each(function(index) {
+        const block = $(this);
+        
+        // Fix Subheading: Ensure the title input has the correct name attribute
+        const subHeadingInput = block.find('.block-title');
+        if (subHeadingInput.length > 0) {
+            subHeadingInput.attr('name', `sections[${index}][title]`);
         }
 
-        var addBlogForm = document.getElementById('addBlogForm');
-        addBlogForm.addEventListener('submit', function(event) { // Add event parameter
-            var editorContent = quill.root.innerHTML;
-            if (editorContent === '<p><br></p>' || editorContent.trim() === '') {
-                hiddenContentInput.value = '';
-            } else {
-                hiddenContentInput.value = editorContent;
+        // Fix Attachments: Find all blue tags and create array inputs
+        const selectedIds = [];
+        block.find('.val-input').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        // Remove any old ones (to prevent doubles on re-submit)
+        block.find('.temp-attachment-input').remove();
+
+        // Create the array inputs that NestJS/Mongoose expect
+        selectedIds.forEach((id, i) => {
+            block.append(`<input type="hidden" name="sections[${index}][attachedItems][${i}]" class="temp-attachment-input" value="${id}">`);
+        });
+    });
+    
+    return true; // Proceed with form submission
+});
+</script>
+
+<script>
+    /**
+ * Debug-Ready Autocomplete Handler
+ */
+$(document).on('keyup focus click', '.remote-autocomplete', function(e) {
+    const input = $(this);
+    const query = input.val();
+    const apiUrl = input.data('api');
+    const dropdown = input.siblings('.dropdown-list');
+
+    // Only search if it's a click/focus OR if user has typed at least 1 char
+    if (e.type === 'keyup' && query.length < 1) {
+        dropdown.hide();
+        return;
+    }
+
+    $.ajax({
+        url: apiUrl,
+        method: 'GET',
+        data: { q: query },
+        success: function(data) {
+            if (!data || data.length === 0) {
+                dropdown.html('<div class="dropdown-item text-muted">No results found in DB</div>').show();
+                return;
             }
 
-            if (hiddenContentInput.value === '' && hiddenContentInput.required) {
-                alert('Blog content is required!');
-                event.preventDefault(); // Stop form submission
-                return false;
-            }
-        });
-        // Optional: Handle clearing input if user wants to remove selected image
-        // You might need a clear button or similar logic depending on UX
+            let html = '';
+            data.forEach(item => {
+                // Check if the mapping keys (id/text) match what the backend sends
+                html += `<div class="dropdown-item" data-id="${item.id}" data-text="${item.text}">${item.text}</div>`;
+            });
+            
+            dropdown.html(html).show();
+        },
+        error: function(xhr) {
+            dropdown.html('<div class="dropdown-item text-danger">Error loading data (Check Console)</div>').show();
+        }
     });
+});
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+    const setupMultiselectUI = (containerId) => {
+        const container = document.getElementById(containerId);
+        const input = container.querySelector('.tag-input-field');
+        const dropdown = container.querySelector('.dropdown-list');
+        const realSelect = container.querySelector('.hidden-select');
+        const tagsContainer = container.querySelector('.selected-tags-container');
+
+        // Function to refresh the visible tags
+        const refreshTags = () => {
+            tagsContainer.querySelectorAll('.country-tag').forEach(t => t.remove());
+            Array.from(realSelect.selectedOptions).forEach(opt => {
+                const tag = document.createElement('span');
+                tag.className = 'country-tag';
+                tag.innerHTML = `${opt.text} <span class="remove-tag" data-id="${opt.value}">&times;</span>`;
+                
+                tag.querySelector('.remove-tag').onclick = () => {
+                    opt.selected = false;
+                    realSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    refreshTags();
+                };
+                tagsContainer.insertBefore(tag, input);
+            });
+        };
+
+        // Click on dropdown items
+        // Click on dropdown items
+        dropdown.onclick = (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            
+            const id = item.dataset.id;
+            const text = item.textContent.trim();
+            
+            // Check if option already exists
+            let opt = realSelect.querySelector(`option[value="${id}"]`);
+            
+            if (!opt) {
+                // Create a new option and explicitly set it to SELECTED
+                opt = new Option(text, id, true, true);
+                realSelect.add(opt);
+            } else {
+                // If it exists, make sure it is marked as selected
+                opt.selected = true;
+            }
+            
+            input.value = '';
+            dropdown.style.display = 'none';
+            refreshTags();
+            
+            // Manually trigger change for cascading logic
+            realSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        // Search logic
+        input.oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(val) ? 'block' : 'none';
+            });
+            dropdown.style.display = 'block';
+        };
+
+        input.onfocus = () => { if(dropdown.children.length > 0) dropdown.style.display = 'block'; };
+
+        // Initial tag draw
+        refreshTags();
+    };
+
+    // Initialize UI for all 3
+    setupMultiselectUI('countryContainer');
+    setupMultiselectUI('categoryContainer');
+    setupMultiselectUI('destinationContainer');
+
+    // --- CASCADING API LOGIC ---
+
+    const updateDependents = async (containerId, apiUrl, ids) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const dropdown = container.querySelector('.dropdown-list');
+        const input = container.querySelector('.tag-input-field');
+        
+        // Show a "Loading..." message
+        dropdown.innerHTML = '<div class="dropdown-item">Loading...</div>';
+        dropdown.style.display = 'block';
+
+        try {
+            const res = await fetch(`${apiUrl}?ids=${ids.join(',')}`);
+            const data = await res.json();
+            
+            // Clear dropdown
+            dropdown.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item">No results found for selected countries</div>';
+                input.placeholder = "No items available";
+            } else {
+                // IMPORTANT: Inject the new items into the dropdown
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.dataset.id = item._id;
+                    div.textContent = item.name;
+                    dropdown.appendChild(div);
+                });
+                input.placeholder = "Search...";
+            }
+        } catch (err) {
+            console.error("API Error:", err);
+            dropdown.innerHTML = '<div class="dropdown-item text-danger">Error loading data</div>';
+        }
+    };
+
+    // --- CASCADING LISTENERS ---
+
+    const countrySelect = document.querySelector('#countryContainer .hidden-select');
+    const categorySelect = document.querySelector('#categoryContainer .hidden-select');
+
+    // When Countries Change -> Update Categories AND Destinations
+    countrySelect.addEventListener('change', function() {
+    const ids = Array.from(this.selectedOptions).map(o => o.value);
+    if (ids.length > 0) {
+        // This MUST match the @Get('api/by-countries') in the controller
+        updateDependents('categoryContainer', '/categories/api/by-countries', ids);
+    }
+});
+
+   
+});
+</script>
+
+<style>
+    .selected-tags-container { position: relative; min-height: 45px; display: flex; align-items: center; }
+    .selected-tags-container:focus-within { border-color: #007bff; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1); }
+    .country-tag { background: #007bff; color: white; padding: 4px 12px; border-radius: 15px; display: flex; align-items: center; font-size: 13px; margin-bottom: 5px; }
+    .country-tag .remove-tag { margin-left: 8px; cursor: pointer; font-weight: bold; }
+    .card-body, .selected-tags-container {
+        overflow: visible !important;
+    }
+    .dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: white;
+        border: 1px solid #ced4da;
+        z-index: 9999 !important; /* Force it to the front */
+        display: none;
+        max-height: 250px;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border-radius: 4px;
+    }
+    .dropdown-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f1f1;
+        color: #333;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #007bff;
+    }
+    .border-left-primary { border-left: 5px solid #007bff !important; }
+    .gap-2 { gap: 0.5rem; }
+</style>

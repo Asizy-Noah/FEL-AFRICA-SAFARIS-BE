@@ -1,25 +1,38 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { CountriesService } from '../../modules/countries/countries.service'; // Adjust path
+import { CountriesService } from '../../modules/countries/countries.service';
+import { DestinationsService } from '../../modules/destinations/destinations.service';
 
 @Injectable()
 export class HeaderDataMiddleware implements NestMiddleware {
-  constructor(private readonly countriesService: CountriesService) {}
+  constructor(
+    private readonly countriesService: CountriesService,
+    private readonly destinationsService: DestinationsService,
+  ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    // Only fetch for public-facing routes if needed, or if layout is 'public'
-    // You might refine this condition based on your application's needs
-    // For simplicity, let's assume it runs on routes that *might* use the public layout.
-    // If you only want it for routes using 'layouts/public', you'd need a more complex check
-    // or apply it selectively in app.module.ts.
+    try {
+      // 1. Fetch Country Data (using your specific service methods)
+      const staticCountries = await this.countriesService.findStaticHeaderCountries();
+      const otherCountries = await this.countriesService.findOtherHeaderCountries();
 
-    const staticCountries = await this.countriesService.findStaticHeaderCountries();
-    const otherCountries = await this.countriesService.findOtherHeaderCountries();
+      // 2. Fetch Destination Data
+      // We use .findAll() and take the data array
+      const destinationsList = await this.destinationsService.findAll();
+      const allDestinations = destinationsList.data || [];
 
-    // Make the data available to all templates rendered after this middleware
-    // via res.locals, which is accessible directly in EJS
-    res.locals.headerStaticCountries = staticCountries;
-    res.locals.headerOtherCountries = otherCountries;
+      // 3. Inject into res.locals for EJS access
+      res.locals.headerStaticCountries = staticCountries;
+      res.locals.headerOtherCountries = otherCountries;
+      res.locals.allDestinations = allDestinations;
+
+    } catch (error) {
+      console.error('Header Middleware Data Fetch Error:', error);
+      // Fallbacks to prevent EJS from crashing if DB is down
+      res.locals.headerStaticCountries = [];
+      res.locals.headerOtherCountries = [];
+      res.locals.allDestinations = [];
+    }
 
     next();
   }

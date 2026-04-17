@@ -1,0 +1,208 @@
+<main class="about-page">
+        <!-- HERO SECTION -->
+        <section id="home" class="generic-hero-section">
+            <div class="generic-hero-content">
+                <h1 class="generic-hero-title">
+                    Enquiry  <span class="highlight-gold">Page</span>
+                </h1>
+            </div>
+            <div class="generic-hero-overlay"></div>
+            <img src="img/nat-3-large.jpg" alt="African Elephant Safari" class="hero-bg">
+            <div class="socials-hero">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <section class="enquiry-section" id="quote">
+            <div class="container">
+                <div class="enquiry-grid">
+                    <!-- Contact Form -->
+                    <div class="enquiry-form-block">
+                        <h2>Fill this form to get a quote for your safari adventure!</h2>
+                        <form class="enquiry-form" id="enquiryForm" action="/bookings/quote" method="POST">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input type="text" id="firstName" name="firstName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <input type="text" id="lastName" name="lastName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="destination">Preferred Destination</label>
+                                <select id="destination" name="destination" required>
+                                    <option value="">Select a destination</option>
+                                    <option value="serengeti">Serengeti National Park</option>
+                                    <option value="amboseli">Amboseli National Park</option>
+                                    <option value="masai-mara">Masai Mara</option>
+                                    <option value="kilimanjaro">Mount Kilimanjaro</option>
+                                    <option value="rift-valley">Rift Valley Lakes</option>
+                                    <option value="custom">Custom Itinerary</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="duration">Trip Duration (Days)</label>
+                                <input type="number" id="duration" name="duration" min="1" max="30" placeholder="e.g., 5">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="travelers">Number of Travelers</label>
+                                <input type="number" id="travelers" name="travelers" min="1" max="20" placeholder="e.g., 4">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dates">Preferred Travel Dates</label>
+                                <input type="date" id="dates" name="dates">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="message">Message</label>
+                                <textarea id="message" name="message" rows="5" placeholder="Tell us about your safari dreams..."></textarea>
+                            </div>
+
+                            <div class="form-group checkbox">
+                                <input type="checkbox" id="terms" name="terms" required>
+                                <label for="terms">I agree to the terms and conditions</label>
+                            </div>
+
+                            <button type="submit" class="submit-btn">Request Quote</button>
+                        </form>
+                        <div class="form-message" id="formMessage" style="display: none;"></div>
+                    </div>
+
+                    <!-- Contact Information Sidebar -->
+                    <div class="enquiry-info-block">
+                        <h2>Contact Details</h2>
+                        
+                        <div class="info-section">
+                            <h3>Phone</h3>
+                            <p><a href="tel:+254712345678">+254 712 345 678</a></p>
+                            <p><a href="tel:+254732456789">+254 732 456 789</a></p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Email</h3>
+                            <p><a href="mailto:info@safariventures.com">info@safariventures.com</a></p>
+                            <p><a href="mailto:bookings@safariventures.com">bookings@safariventures.com</a></p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Office Location</h3>
+                            <p>123 Safari Avenue<br>Nairobi, Kenya 00100</p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Office Hours</h3>
+                            <p><strong>Monday - Friday</strong><br>8:00 AM - 6:00 PM</p>
+                            <p><strong>Saturday</strong><br>9:00 AM - 4:00 PM</p>
+                            <p><strong>Sunday</strong><br>Closed</p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Follow Us</h3>
+                            <div class="social-links-compact">
+                                <a href="#" title="Facebook">Facebook</a>
+                                <a href="#" title="Instagram">Instagram</a>
+                                <a href="#" title="Twitter">Twitter</a>
+                                <a href="#" title="YouTube">YouTube</a>
+                            </div>
+                        </div>
+
+                        <div class="info-section support-info">
+                            <p class="info-text">Need urgent assistance? Call us directly during office hours for immediate support.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq-section" id="faqs">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Frequently Asked Questions</h2>
+                </div>
+                <div class="faq-items">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h4>How far in advance should I book?</h4>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>We recommend booking 2-3 months in advance for the best availability and rates, though we can sometimes accommodate last-minute bookings.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h4>What is your cancellation policy?</h4>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>See our Travel Policy page for detailed cancellation terms. Generally, cancellations made 60+ days before travel receive full refunds.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h4>Do you provide visa assistance?</h4>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Yes, we provide guidance and documentation support for visa applications to all required countries.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h4>What about travel insurance?</h4>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Travel insurance is highly recommended and we can provide recommendations for reputable providers.</p>
+                        </div>
+                    </div>
+                    
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const faqQuestions = document.querySelectorAll('.faq-question');
+
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', () => {
+                    const item = question.parentElement;
+                    
+                    // Optional: Close other open items (Accordion mode)
+                    /*
+                    document.querySelectorAll('.faq-item').forEach(otherItem => {
+                        if (otherItem !== item) otherItem.classList.remove('active');
+                    });
+                    */
+
+                    item.classList.toggle('active');
+                });
+            });
+        });
+    </script>

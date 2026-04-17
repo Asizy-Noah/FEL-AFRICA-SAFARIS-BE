@@ -1,4 +1,5 @@
 // src/main.ts
+import 'reflect-metadata';
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { join } from "path";
@@ -88,7 +89,7 @@ async function bootstrap() {
   app.use((req, res, next) => {
     res.locals.success_msg = req.flash("success_msg");
     res.locals.error_msg = req.flash("error_msg");
-    res.locals.error = req.flash("error");
+    res.locals.error = req.flash("error"); 
     // Ensure req.session is accessed safely
     res.locals.user = (req.session as any)?.user || null; // Cast req.session to any if needed for user property
     next();
@@ -98,17 +99,7 @@ async function bootstrap() {
   app.use(express.json()); // Also good practice if you expect JSON bodies too
 
   app.use(methodOverride('_method'));
-
-  // Global validation pipe - This block is duplicated from above.
-  // It's already defined before Passport. I've left it as is for now
-  // but typically you only define app.useGlobalPipes once.
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    })
-  );
+  
 
   // Enable this in production once verified
   // app.useGlobalFilters(new AllExceptionsFilter(), new HttpExceptionFilter());

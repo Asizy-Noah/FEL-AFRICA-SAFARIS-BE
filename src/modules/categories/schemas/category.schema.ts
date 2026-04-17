@@ -22,8 +22,8 @@ export class Category extends Document {
   image: string; // This will now typically be the category's cover image path
 
   // New field: Link to the Country schema
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Country", required: false }) // Make it required: false for "All Countries" option
-  country?: Country; // Use 'Country' as the type reference for population
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Country" }], default: [] })
+  countries: Country[];
 
   // SEO Fields (copied from your add category ejs, assume they will be added)
   @Prop()

@@ -94,6 +94,9 @@ export class Tour extends Document {
   @Prop()
   priceExcludes: string; // Add this field to your schema
 
+  @Prop()
+  additionalInfo: string;
+
   // SEO fields - all present in the HTML form
   @Prop()
   seoTitle: string;

@@ -1,3 +1,4 @@
+// src/modules/categories/categories-public.controller.ts
 import {
   Controller,
   Get,
@@ -10,7 +11,7 @@ import {
 } from "@nestjs/common";
 import { Response } from "express";
 import { CategoriesService } from "./categories.service";
-import { ToursService } from "../tours/tours.service"; // Import ToursService
+import { ToursService } from "../tours/tours.service";
 
 @Controller('categories')
 export class CategoriesPublicController {
@@ -27,7 +28,7 @@ export class CategoriesPublicController {
     @Res({ passthrough: true }) res: Response
   ) {
     try {
-      // Find category and populate its associated country
+      // Find category and populate its associated countries array
       const category = await this.categoriesService.findBySlug(slug);
 
       if (!category) {
@@ -35,19 +36,25 @@ export class CategoriesPublicController {
       }
 
       let tours = [];
-      if (category.country) { // Check if the category is linked to a country
-        // Fetch tours that belong to this category AND this category's country
+      
+      // Check if the category has associated countries in the array
+      if (category.countries && category.countries.length > 0) {
+        // Extract all country IDs from the array
+        const countryIds = category.countries.map(country => 
+          (country as any)._id ? (country as any)._id.toString() : country.toString()
+        );
+
+        // Fetch tours that belong to this category AND ANY of these countries
+        // Note: Ensure your toursService.findByCategory is updated to handle an array of IDs
+        // If it doesn't, passing the first ID is the safest fallback: countryIds[0]
         tours = await this.toursService.findByCategory(
           category._id.toString(),
-          category.country._id.toString() // <--- PASS THE COUNTRY ID HERE
+          countryIds // Passing the array of IDs
         );
       } else {
-        // Handle categories not linked to a specific country (e.g., "All African Safaris")
-        // You might fetch tours only by category ID, or display a different message.
-        // For now, we'll fetch tours only by category if no country is linked.
+        // Handle categories not linked to a specific country
         tours = await this.toursService.findByCategory(category._id.toString());
       }
-
 
       return {
         title: `${category.name}`,
@@ -59,7 +66,7 @@ export class CategoriesPublicController {
           title: category.seoTitle || `${category.name}`,
           description: category.seoDescription || category.description,
           keywords: category.seoKeywords,
-          canonicalUrl: `YOUR_BASE_URL/categories/${category.slug}`, // Update with your actual base URL
+          canonicalUrl: `https://yourdomain.com/categories/${category.slug}`, 
           ogImage: category.image,
         },
       };

@@ -21,15 +21,18 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
 import { BlogsService } from "./blogs.service";
-import type { CreateBlogDto } from "./dto/create-blog.dto";
-import type { UpdateBlogDto } from "./dto/update-blog.dto";
+import { CreateBlogDto } from "./dto/create-blog.dto";
+import { UpdateBlogDto } from "./dto/update-blog.dto";
 import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
 import { UserRole } from "../users/schemas/user.schema";
+import { TourStatus } from '../tours/schemas/tour.schema';
 import { BlogStatus } from "./schemas/blog.schema";
 import { getMulterConfig } from '../../config/multer.config';
 import { CountriesService } from "../countries/countries.service";
 import { ToursService } from '../tours/tours.service';
 import { CategoriesService } from "../categories/categories.service";
+import { DestinationsService } from "../destinations/destinations.service";
+import { PagesService } from "../pages/pages.service";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { LocalStorageService } from '../google-cloud/local-storage.service';
@@ -48,177 +51,106 @@ interface DashboardBlogsQuery {
     status?: string;
     search?: string;
     page?: string;
-    limit?: string; // Add limit for dashboard pagination control if needed
+    limit?: string;
     sortBy?: string;
     category?: string;
     country?: string;
     tag?: string;
 }
 
-@Controller("blogs") // Base path for all routes in this controller
+@Controller("blogs")
 export class BlogsController {
     constructor(
         private readonly blogsService: BlogsService,
-        private readonly countriesService: CountriesService,
-        private readonly categoriesService: CategoriesService,
-        private readonly toursService: ToursService,
+    private readonly toursService: ToursService,
+    private readonly countriesService: CountriesService,
+    private readonly categoriesService: CategoriesService,
+    private readonly destinationsService: DestinationsService, // Add this
+    private readonly pagesService: PagesService,
         private readonly localStorageService: LocalStorageService,
     ) {}
 
-    // ===============================================
-    // PUBLIC-FACING BLOG ROUTES (accessible to everyone)
-    // ===============================================
-
-    @Get() // GET /blogs (public blog listing)
-    @Render("public/blogs/index")
-    async getPublicAllBlogs(@Query() query: PublicBlogsQuery) {
-        // Build the filter for public blogs (only visible blogs)
-        const filterOptions: any = { status: BlogStatus.VISIBLE };
-
-        if (query.search) {
-            filterOptions.$or = [
-                { title: { $regex: query.search, $options: 'i' } },
-                { excerpt: { $regex: query.search, $options: 'i' } },
-                { content: { $regex: query.search, $options: 'i' } }
-            ];
-        }
-
-        const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll({
-            ...filterOptions,
-            page: query.page ? parseInt(query.page) : 1,
-            limit: query.limit ? parseInt(query.limit) : 8, // Adjust limit if you want more/fewer cards per page
-            sortBy: query.sortBy || 'newest',
-        });
-
-        // Fetch popular blogs for the sidebar
-        const popularBlogs = await this.blogsService.findPopular(15);
-
-        return {
-            title: "Safari Updates",
-            blogs,
-            query, // Still pass query for the search bar to keep sticky value
-            currentPage,
-            totalPages,
-            popularBlogs, // Pass popular blogs
-            layout: "layouts/public",
-        };
-    }
-
-
-    // IMPORTANT: Specific routes like 'dashboard' or 'add' MUST come before dynamic ':slug'
-    // Otherwise, 'dashboard' might be interpreted as a slug!
 
     // ===============================================
-    // DASHBOARD BLOG ROUTES (authenticated users only)
+    // DASHBOARD BLOG ROUTES
     // ===============================================
 
-    @Get("dashboard/blogs") // GET /blogs/dashboard/blogs (dashboard blog listing)
+    @Get("dashboard/blogs")
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
-    @Render("dashboard/blogs/index") // <--- THIS MUST RENDER THE DASHBOARD EJS
-    async getDashboardBlogs(@Query() query: DashboardBlogsQuery, @Req() req) {
-        const filters: any = {};
-        const page = parseInt(query.page as string, 10) || 1;
-        const limit = parseInt(query.limit as string, 10) || 100; // Default limit for dashboard
-
-        // Apply Status Filter
-        if (query.status && query.status !== 'all' && Object.values(BlogStatus).includes(query.status as BlogStatus)) {
-            filters.status = query.status;
-        }
-
-        // Apply Search Filter across multiple fields
-        if (query.search) {
-            filters.$or = [
-                { title: { $regex: query.search, $options: 'i' } },
-                { excerpt: { $regex: query.search, $options: 'i' } },
-                { content: { $regex: query.search, $options: 'i' } }
-            ];
-        }
-
-        // Apply Category Filter
-        if (query.category) {
-            filters.categories = query.category; // Service will handle ObjectId conversion
-        }
-
-        // Apply Country Filter (if you have one for blogs)
-        if (query.country) {
-            filters.countries = query.country; // Service will handle ObjectId conversion
-        }
-
-        // Apply Tag Filter
-        if (query.tag) {
-            filters.tags = query.tag; // Service will handle tag array filtering
-        }
-
-        // If agent, only show their blogs
-        if (req.user.role === UserRole.AGENT) {
-            filters.author = req.user.id; // Filter by the authenticated user's ID
-        }
+    // REMOVED @Render decorator here to prevent double-rendering
+    async getDashboardBlogs(@Query() query: DashboardBlogsQuery, @Req() req, @Res() res: Response) {
+        const safeQuery = {
+            status: query.status || 'all',
+            search: query.search || '',
+            sortBy: query.sortBy || 'newest',
+            page: query.page || '1',
+        };
 
         try {
+            const filters: any = {};
+            const page = parseInt(safeQuery.page as string, 10) || 1;
+            const limit = 10;
+
+            if (safeQuery.status !== 'all') {
+                filters.status = safeQuery.status;
+            }
+
+            if (safeQuery.search) {
+                filters.$or = [
+                    { title: { $regex: safeQuery.search, $options: 'i' } },
+                    { content: { $regex: safeQuery.search, $options: 'i' } }
+                ];
+            }
+
+            if (req.user.role === UserRole.AGENT) {
+                filters.author = req.user.id;
+            }
+
             const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll({
                 ...filters,
                 page,
                 limit,
-                sortBy: query.sortBy || 'newest', // Default sort for dashboard
+                sortBy: safeQuery.sortBy,
             });
 
             const countriesResult = await this.countriesService.findAll({});
             const categoriesResult = await this.categoriesService.findAll({});
-
             const messages = req.flash();
 
-            return {
+            // Manually render and return
+            return res.render("dashboard/blogs/index", {
                 title: "Blogs",
                 blogs,
                 countries: countriesResult.data || [],
                 categories: categoriesResult.data || [],
                 user: req.user,
-                // Pass back the current query state to the EJS for sticky form fields
-                query: {
-                    status: query.status || 'all',
-                    search: query.search || '',
-                    page: page,
-                    limit: limit,
-                    sortBy: query.sortBy || 'newest',
-                    category: query.category || '',
-                    country: query.country || '',
-                    tag: query.tag || '',
-                },
+                query: safeQuery, 
                 currentPage,
                 totalPages,
                 layout: "layouts/dashboard",
                 messages: {
-                    success_msg: messages.success_msg,
-                    error_msg: messages.error_msg,
-                    error: messages.error,
+                    success_msg: messages.success_msg || [],
+                    error_msg: messages.error_msg || [],
+                    error: messages.error || [],
                 },
                 blogStatuses: Object.values(BlogStatus),
-            };
+            });
         } catch (error) {
-            console.error("Error fetching dashboard blogs:", error);
-            req.flash('error_msg', 'Failed to load dashboard blog posts: ' + error.message);
-            return {
-                blogs: [], // Return empty array on error
-                query: { status: 'all', search: '', page: 1, limit: 10, sortBy: 'newest', category: '', country: '', tag: '' },
-                currentPage: 1,
-                totalPages: 0,
-                messages: req.flash(),
-                layout: "layouts/dashboard",
-                blogStatuses: Object.values(BlogStatus),
-                countries: [],
-                categories: [],
-                user: req.user,
-            };
+            console.error("Dashboard Error:", error);
+            // If it fails, redirecting is safer than rendering a broken page
+            req.flash('error_msg', 'An error occurred loading blogs.');
+            return res.redirect("/dashboard");
         }
     }
 
-
-    @Get("dashboard/add") // GET /blogs/dashboard/add
+    @Get("dashboard/add")
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
-    @Render("dashboard/blogs/add") // Renders dashboard add form
+    @Render("dashboard/blogs/add")
     async getAddBlogPage(@Req() req) {
+        const countries = await this.countriesService.findAll({});
+        const categories = await this.categoriesService.findAll({});
         const countriesResult = await this.countriesService.findAll({});
         const categoriesResult = await this.categoriesService.findAll({});
         const messages = req.flash();
@@ -239,7 +171,7 @@ export class BlogsController {
         };
     }
 
-    @Post("dashboard/add") // POST /blogs/dashboard/add
+    @Post("dashboard/add")
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
     @UseInterceptors(FileInterceptor("coverImage", getMulterConfig('blogs')))
@@ -250,118 +182,95 @@ export class BlogsController {
         @Res() res: Response
     ) {
         try {
+            // 1. Handle Cover Image Upload
             if (file) {
-                // Save image with local path
                 createBlogDto.coverImage = `/uploads/blogs/${file.filename}`;
-            } else if (createBlogDto.coverImage === '') {
-                // This means the user explicitly removed an image (though for 'add', this path is less common)
-                createBlogDto.coverImage = null;
             } else {
-                // If no file uploaded and createBlogDto.coverImage is also null/undefined,
-                // it means no image was provided. If image is mandatory, handle it here.
                 req.flash("error_msg", "Please upload a cover image.");
                 req.flash('oldInput', createBlogDto);
                 return res.redirect("/blogs/dashboard/add");
             }
 
-            // Ensure tags are an array
+            // 2. Normalize Tags (Convert comma-separated string to Array)
             if (typeof createBlogDto.tags === "string") {
                 createBlogDto.tags = (createBlogDto.tags as string)
                     .split(",")
-                    .map((tag) => tag.trim())
-                    .filter(tag => tag.length > 0);
-            } else if (createBlogDto.tags === null || createBlogDto.tags === undefined) {
-                createBlogDto.tags = [];
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
             }
 
-            // Set author and updatedBy for new blog
-            (createBlogDto as any).author = req.user.id;
-            (createBlogDto as any).updatedBy = req.user.id;
+            // 3. Normalize Countries (Ensure it's an array for Mongoose)
+            if (createBlogDto.countries) {
+                createBlogDto.countries = Array.isArray(createBlogDto.countries) 
+                    ? createBlogDto.countries 
+                    : [createBlogDto.countries].filter(Boolean);
+            } else {
+                createBlogDto.countries = [];
+            }
 
+            // 4. Normalize Categories (Ensure it's an array for Mongoose)
+            if (createBlogDto.categories) {
+                createBlogDto.categories = Array.isArray(createBlogDto.categories) 
+                    ? createBlogDto.categories 
+                    : [createBlogDto.categories].filter(Boolean);
+            } else {
+                createBlogDto.categories = [];
+            }
+
+            // 5. Create the blog via Service
+            // We pass req.user.id as the author
             await this.blogsService.create(createBlogDto, req.user.id);
-
+            
             req.flash("success_msg", "Blog added successfully");
-
             return res.redirect("/blogs/dashboard/blogs");
 
         } catch (error) {
-            console.error('Error adding blog:', error);
-            let flashMessage = "Failed to add blog post.";
-
-            if (error instanceof HttpException) {
-                const response = error.getResponse();
-                if (typeof response === 'object' && response !== null && 'message' in response) {
-                    if (Array.isArray(response.message)) {
-                        flashMessage = response.message.join(', ');
-                    } else {
-                        flashMessage = response.message as string;
-                    }
-                } else if (typeof response === 'string') {
-                    flashMessage = response;
-                } else {
-                    flashMessage = error.message || "An unknown error occurred.";
-                }
-            } else if (error.message) {
-                if (error.code === 11000 && error.keyPattern && error.keyValue) {
-                    if (error.keyPattern.slug) flashMessage = "A blog with this slug already exists. Please choose a different title or slug.";
-                    else if (error.keyPattern.title) flashMessage = "A blog with this title already exists.";
-                    else flashMessage = "A duplicate entry error occurred.";
-                } else {
-                    flashMessage = error.message;
-                }
-            }
-
-            req.flash("error_msg", flashMessage);
+            console.error("CREATE BLOG ERROR:", error);
+            req.flash("error_msg", error.message || "An error occurred while creating the blog.");
             req.flash('oldInput', createBlogDto);
             return res.redirect("/blogs/dashboard/add");
         }
     }
 
+    // Controller Changes
 
-    @Get("dashboard/edit/:id") // GET /blogs/dashboard/edit/:id
+    @Get("dashboard/edit/:id")
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
-    @Render("dashboard/blogs/edit") // Renders dashboard edit form
-    async getEditBlogPage(@Param("id") id: string, @Req() req, @Res({ passthrough: true }) res: Response) {
+    @Render("dashboard/blogs/edit")
+    async getEditBlogPage(@Param("id") id: string, @Req() req, @Res() res: Response) {
         try {
             const blog = await this.blogsService.findOne(id);
-            if (!blog) {
-                throw new NotFoundException(`Blog with ID ${id} not found.`);
-            }
+            if (!blog) throw new NotFoundException(`Blog not found.`);
 
-            // Authorization check
+            // Security check for Agents
             if (req.user.role === UserRole.AGENT && blog.author.toString() !== req.user.id) {
-                req.flash("error_msg", "You are not authorized to edit this blog");
+                req.flash("error_msg", "Unauthorized access to this blog.");
                 return res.redirect("/blogs/dashboard/blogs");
             }
 
+            // We fetch these so the "Search" and "Dropdowns" in the builder work
             const countriesResult = await this.countriesService.findAll({});
             const categoriesResult = await this.categoriesService.findAll({});
-            const messages = req.flash();
-
+            
             return {
-                title: "Edit Blog - Dashboard",
-                blog,
+                title: "Edit Blog",
+                blog, // This now contains the 'sections' array
                 countries: countriesResult.data || [],
                 categories: categoriesResult.data || [],
                 user: req.user,
                 layout: "layouts/dashboard",
-                messages: {
-                    success_msg: messages.success_msg,
-                    error_msg: messages.error_msg,
-                    error: messages.error,
-                },
-                oldInput: messages.oldInput ? messages.oldInput[0] : {},
+                messages: req.flash(),
                 blogStatuses: Object.values(BlogStatus),
             };
         } catch (error) {
-            console.error('Error fetching blog for edit:', error);
-            req.flash("error_msg", error.message || "Failed to load blog for editing.");
+            req.flash("error_msg", "Could not load blog for editing.");
             return res.redirect("/blogs/dashboard/blogs");
         }
     }
 
-    @Patch("dashboard/blogs/edit/:id") // PATCH /blogs/dashboard/blogs/edit/:id
+    // Ensure the form uses POST with a Method Override or just POST to this route
+    @Post("dashboard/edit/:id") // Using Post because HTML forms don't support PATCH natively
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
     @UseInterceptors(FileInterceptor("coverImage", getMulterConfig('blogs')))
@@ -373,203 +282,261 @@ export class BlogsController {
         @Res() res: Response,
     ) {
         try {
-            const existingBlog = await this.blogsService.findOne(id);
-            if (!existingBlog) {
-                throw new NotFoundException(`Blog with ID ${id} not found.`);
-            }
-
-            // Authorization check
-            if (req.user.role === UserRole.AGENT && existingBlog.author.toString() !== req.user.id) {
-                req.flash("error_msg", "You are not authorized to update this blog");
-                return res.redirect("/blogs/dashboard/blogs");
-            }
-
             if (file) {
-                // Save new file with local path
-                const newImageUrl = `/uploads/blogs/${file.filename}`;
-                // Delete old file if it exists and is different
-                if (existingBlog.coverImage && existingBlog.coverImage !== newImageUrl) {
-                    await this.localStorageService.deleteFile(existingBlog.coverImage);
-                }
-                updateBlogDto.coverImage = newImageUrl;
-            } else if (updateBlogDto.coverImage === '') {
-                // If image is being removed (frontend sends empty string)
-                if (existingBlog.coverImage) {
-                    await this.localStorageService.deleteFile(existingBlog.coverImage);
-                }
-                updateBlogDto.coverImage = null;
-            }
-            // If file is null and updateBlogDto.coverImage is NOT empty,
-            // it means no new file was uploaded and the existing image URL should be preserved.
-            // No action needed here, as the existingBlog.coverImage will implicitly carry over if updateBlogDto.coverImage is not touched.
-
-
-            if (typeof updateBlogDto.tags === "string") {
-                updateBlogDto.tags = (updateBlogDto.tags as string).split(",").map((tag) => tag.trim()).filter(tag => tag.length > 0);
-            } else if (updateBlogDto.tags === null || updateBlogDto.tags === undefined) {
-                updateBlogDto.tags = [];
-            }
-
-            if (!updateBlogDto.slug && updateBlogDto.title) {
-                updateBlogDto.slug = updateBlogDto.title
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .trim()
-                    .replace(/\s+/g, '-');
+                updateBlogDto.coverImage = `/uploads/blogs/${file.filename}`;
+                // Optional: delete old image logic here via localStorageService
             }
 
             await this.blogsService.update(id, updateBlogDto, req.user.id);
-
             req.flash("success_msg", "Blog updated successfully");
             return res.redirect("/blogs/dashboard/blogs");
         } catch (error) {
-            console.error('Error updating blog:', error);
-            let flashMessage = "Failed to update blog.";
-            if (error instanceof HttpException) {
-                const response = error.getResponse();
-                if (typeof response === 'object' && response !== null && 'message' in response) {
-                    if (Array.isArray(response.message)) {
-                        flashMessage = response.message.join(', ');
-                    } else {
-                        flashMessage = response.message as string;
-                    }
-                } else if (typeof response === 'string') {
-                    flashMessage = response;
-                } else {
-                    flashMessage = error.message || "An unknown error occurred.";
-                }
-            } else if (error.message) {
-                if (error.code === 11000 && error.keyPattern && error.keyValue) {
-                    if (error.keyPattern.slug) flashMessage = "A blog with this slug already exists. Please choose a different title or slug.";
-                    else if (error.keyPattern.title) flashMessage = "A blog with this title already exists.";
-                    else flashMessage = "A duplicate entry error occurred.";
-                } else {
-                    flashMessage = error.message;
-                }
-            }
-
-            req.flash("error_msg", flashMessage);
-            req.flash('oldInput', updateBlogDto);
+            req.flash("error_msg", error.message);
             return res.redirect(`/blogs/dashboard/edit/${id}`);
         }
     }
 
-    @Delete("dashboard/blogs/:id") // DELETE /blogs/dashboard/blogs/:id
+    @Delete("dashboard/blogs/:id")
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
     async deleteBlog(@Param("id") id: string, @Req() req, @Res() res: Response) {
         try {
             const blog = await this.blogsService.findOne(id);
-            if (!blog) {
-                throw new NotFoundException(`Blog with ID ${id} not found.`);
-            }
-
-            // Authorization check
-            if (req.user.role === UserRole.AGENT && blog.author.toString() !== req.user.id) {
-                req.flash("error_msg", "You are not authorized to delete this blog");
-                return res.redirect("/blogs/dashboard/blogs");
-            }
-
-            // Delete old image before deleting the blog entry
-            if (blog.coverImage) {
-                await this.localStorageService.deleteFile(blog.coverImage);
-            }
-
+            if (blog.coverImage) await this.localStorageService.deleteFile(blog.coverImage);
             await this.blogsService.remove(id);
-
             req.flash("success_msg", "Blog deleted successfully");
-            return res.redirect("/blogs/dashboard/blogs");
         } catch (error) {
-            console.error('Error deleting blog:', error);
-            req.flash("error_msg", error.message || "Failed to delete blog.");
-            return res.redirect("/blogs/dashboard/blogs");
+            req.flash("error_msg", "Error deleting blog");
         }
+        return res.redirect("/blogs/dashboard/blogs");
     }
 
-    @Patch("dashboard/status/:id/:status") // PATCH /blogs/dashboard/status/:id/:status
-    @UseGuards(SessionAuthGuard, RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.AGENT)
-    async updateBlogStatus(
-        @Param("id") id: string,
-        @Param("status") status: BlogStatus,
-        @Req() req,
-        @Res() res: Response,
+    // ===============================================
+    // PUBLIC-FACING SINGLE BLOG POST ROUTE
+    // ===============================================
+    // ===============================================
+    // BLOG HOME PAGE (Carousels)
+    // ===============================================
+    @Get()
+    @Render("public/pages/blogs/index")
+    async getBlogsIndex() {
+        const countryData = await this.countriesService.findAll();
+        const categoryData = await this.categoriesService.findAll();
+        const trendingBlogs = await this.blogsService.findPopular(6);
+        const itineraries = await this.toursService.findPopular(6);
+
+        return {
+            title: "Travel Blog - Feel Africa Safaris",
+            countries: Array.isArray(countryData) ? countryData : countryData.data,
+            categories: Array.isArray(categoryData) ? categoryData : categoryData.data,
+            trendingBlogs,
+            itineraries,
+            layout: "layouts/public"
+        };
+    }
+
+    // ===============================================
+    // SPECIFIC COUNTRY PAGE
+    // ===============================================
+    @Get('country/:id')
+    async getCountryBlogs(
+        @Param('id') countryId: string, 
+        @Query('search') search: string,
+        @Query('category') categoryId: string,
+        @Res() res: Response 
     ) {
         try {
-            if (!Object.values(BlogStatus).includes(status as BlogStatus)) {
-                throw new BadRequestException(`Invalid blog status: ${status}`);
+            const selectedCountry = await this.countriesService.findOne(countryId);
+            if (!selectedCountry) return res.redirect('/blogs');
+
+            const categoryData = await this.categoriesService.findAll();
+            const categories = Array.isArray(categoryData) ? categoryData : categoryData.data;
+
+            const filter: any = { 
+                // CHANGE THIS: from 'country' to 'countries'
+                countries: countryId, 
+                status: BlogStatus.VISIBLE 
+            };
+
+            // Also ensure your search logic doesn't overwrite the filter incorrectly
+            if (search) {
+                filter.$or = [
+                    { title: { $regex: search, $options: 'i' } },
+                    { excerpt: { $regex: search, $options: 'i' } }
+                ];
             }
 
-            const blog = await this.blogsService.findOne(id);
-            if (!blog) {
-                throw new NotFoundException(`Blog with ID ${id} not found.`);
+            if (categoryId && categoryId !== 'all') {
+                filter.categories = categoryId; // Usually categories is also plural in schemas
             }
 
-            // Authorization check
-            if (req.user.role === UserRole.AGENT && blog.author.toString() !== req.user.id) {
-                req.flash("error_msg", "You are not authorized to update this blog");
-                return res.redirect("/blogs/dashboard/blogs");
-            }
+            const blogsResult = await this.blogsService.findAll(filter);
+            const attractions = await this.destinationsService.findByCountry(countryId, 5);
 
-            await this.blogsService.updateStatus(id, status, req.user.id);
-
-            req.flash("success_msg", `Blog status updated to ${status}`);
-            return res.redirect("/blogs/dashboard/blogs");
+            return res.render("public/pages/blogs/country", {
+                title: `${selectedCountry.name} - Travel Blogs`,
+                selectedCountry,
+                blogs: blogsResult.blogs || [],
+                categories: categories || [],
+                attractions: attractions || [],
+                searchQuery: search || '',
+                selectedCategory: categoryId || 'all',
+                layout: "layouts/public"
+            });
         } catch (error) {
-            console.error('Error updating blog status:', error);
-            req.flash("error_msg", error.message || "Failed to update blog status.");
-            return res.redirect("/blogs/dashboard/blogs");
+            return res.redirect('/blogs');
         }
     }
 
     // ===============================================
-    // PUBLIC-FACING SINGLE BLOG POST ROUTE (Must be last to avoid capturing dashboard routes)
+    // SPECIFIC CATEGORY PAGE
     // ===============================================
-    @Get(":slug") // GET /blogs/:slug (public single blog post)
-    @Render("public/blogs/show") // <--- THIS IS FOR THE PUBLIC VIEW
-    async getPublicSingleBlog(@Param("slug") slug: string, @Req() req, @Res({ passthrough: true }) res: Response) {
+    @Get('category/:id')
+    async getCategoryBlogs(
+        @Param('id') categoryId: string, 
+        @Query('search') search: string,
+        @Query('country') countryId: string,
+        @Res() res: Response 
+    ) {
         try {
-            const blog = await this.blogsService.findBySlug(slug);
-            if (!blog) {
-                throw new NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
+            const selectedCategory = await this.categoriesService.findOne(categoryId);
+            if (!selectedCategory) return res.redirect('/blogs');
+
+            const countryData = await this.countriesService.findAll();
+            const countries = Array.isArray(countryData) ? countryData : countryData.data;
+
+            const filter: any = { 
+                categories: categoryId, // Filter by this specific interest
+                status: BlogStatus.VISIBLE 
+            };
+
+            if (search) {
+                filter.$or = [
+                    { title: { $regex: search, $options: 'i' } },
+                    { excerpt: { $regex: search, $options: 'i' } }
+                ];
             }
 
-            // --- Increment views for the blog post ---
-            await this.blogsService.incrementViews(slug); // Call the new method
-
-            // --- Fetch Popular Tour Packages ---
-            const popularTours = await this.toursService.findPopular(10); // Fetch 4 popular tours
-
-            // Get related blogs from the same categories or countries
-            const relatedBlogsResult = await this.blogsService.findAll({
-                status: BlogStatus.VISIBLE,
-                limit: 4, // Fetch a few more to filter out current blog
+            const blogsResult = await this.blogsService.findAll(filter);
+            
+        // 2. Fetch destinations that have this category ID in their 'categories' array
+            // We pass the ID directly; Mongoose knows to look into the array
+            const attractionsResult = await this.destinationsService.findAll({ 
+                categories: categoryId 
             });
 
-            const filteredRelatedBlogs = relatedBlogsResult.blogs.filter((relatedBlog) => relatedBlog._id.toString() !== blog._id.toString());
+            // 3. Extract the array (Handling the common { data: [], total: x } response pattern)
+            const attractions = Array.isArray(attractionsResult) 
+                ? attractionsResult 
+                : (attractionsResult.data || []);
 
-            return {
-                title: `${blog.title} - Feel Africa Safaris`,
-                blog,
-                popularTours, // <-- Pass popular tours to the EJS template
-                relatedBlogs: filteredRelatedBlogs.slice(0, 3),
-                layout: "layouts/public",
-                seo: {
-                    title: blog.seoTitle || `${blog.title} - Feel Africa Safaris`,
-                    description: blog.seoDescription || blog.excerpt,
-                    keywords: blog.seoKeywords,
-                    canonicalUrl: blog.seoCanonicalUrl,
-                    ogImage: blog.seoOgImage || blog.coverImage,
-                },
-            };
+            return res.render("public/pages/blogs/category", {
+                title: `${selectedCategory.name} - Explore by Interest`,
+                selectedCategory,
+                blogs: blogsResult.blogs || [],
+                countries: countries || [], // Passing countries for the dropdown filter
+                attractions: attractions.slice(0, 5),
+                searchQuery: search || '',
+                selectedCountry: countryId || 'all',
+                layout: "layouts/public"
+            });
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                req.flash('error_msg', error.message);
-                return res.redirect('/blogs');
-            }
-            console.error('Error loading public blog post:', error);
-            req.flash('error_msg', 'An unexpected error occurred while loading the blog post.');
+            console.error("Category Route Error:", error);
             return res.redirect('/blogs');
         }
+    }
+
+    // ===============================================
+    // SINGLE BLOG PAGE
+    // ===============================================
+    @Get(":slug")
+    @Render("public/pages/blogs/blog")
+    async getPublicSingleBlog(@Param("slug") slug: string, @Res() res: Response) {
+        try {
+            // Call the service method we just created
+            const details = await this.blogsService.getBlogDetailsForPublic(slug);
+            
+            if (!details) {
+                return res.redirect('/blogs');
+            }
+
+            const { blog, prevBlog, nextBlog, relatedBlogs } = details;
+
+            // Analytics (non-blocking)
+            this.blogsService.incrementViews(slug);
+
+            // Sidebar data
+            const popularTours = await this.toursService.findPopular(10);
+            const categories = await this.categoriesService.findAll();
+
+            return {
+                layout: "layouts/public",
+                blog,
+                prevBlog,
+                nextBlog,
+                relatedBlogs,
+                popularTours,
+                categories,
+                title: blog.seoTitle || `${blog.title} - Feel Africa Safaris`,
+                seo: {
+                    title: blog.seoTitle || blog.title,
+                    description: blog.seoDescription || blog.excerpt,
+                    keywords: blog.seoKeywords || "",
+                    ogImage: blog.seoOgImage || blog.coverImage,
+                    canonical: `https://feelafricasafaris.com/blogs/${blog.slug}`,
+                }
+            };
+        } catch (error) {
+            console.error("Blog Route Error:", error);
+            return res.redirect('/blogs');
+        }
+    }
+
+
+    // --- SEARCH API ENDPOINTS ---
+
+    @Get('api/search-tours')
+    async searchTours(@Query('q') query: string) {
+        try {
+            const tours = await this.toursService.searchForBlogs(query || '');
+            
+            const mappedData = tours.map(t => ({ 
+                id: t._id, 
+                text: t.title 
+            }));
+            return mappedData;
+        } catch (error) {
+            return [];
+        }
+    }
+
+    @Get('api/search-blogs')
+    async searchBlogs(@Query('q') query: string) {
+        const blogs = await this.blogsService.searchForBlogs(query || '');
+        return blogs.map(b => ({ id: b._id, text: b.title }));
+    }
+
+    @Get('api/search-countries')
+    async searchCountries(@Query('q') query: string) {
+        const results = await this.countriesService.searchForBlogs(query || '');
+        return results.map(c => ({ id: c._id, text: c.name }));
+    }
+
+    @Get('api/search-categories')
+    async searchCategories(@Query('q') query: string) {
+        const results = await this.categoriesService.searchForBlogs(query || '');
+        return results.map(c => ({ id: c._id, text: c.name }));
+    }
+
+    @Get('api/search-destinations')
+    async searchDestinations(@Query('q') query: string) {
+        const results = await this.destinationsService.searchForBlogs(query || '');
+        return results.map(d => ({ id: d._id, text: d.name }));
+    }
+
+    @Get('api/search-pages')
+    async searchPages(@Query('q') query: string) {
+        const pages = await this.pagesService.searchForBlogs(query || '');
+        return pages.map(p => ({ id: p._id, text: p.title }));
     }
 }

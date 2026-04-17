@@ -12,20 +12,17 @@ import {
   Render,
   Query,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
   HttpException,
   HttpStatus,
-  UploadedFiles,
   Patch,
   Delete,
+  Session,
 } from "@nestjs/common";
-import {
-  FilesInterceptor,
-  FileFieldsInterceptor,
-  FileInterceptor,
-  AnyFilesInterceptor,
-} from "@nestjs/platform-express"; // Keep these for local storage if still needed, but we'll remove multer-specific storage options later
+import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
+import { diskStorage } from "multer";
+import { extname, join } from "path";
 import { ToursService } from "./tours.service";
 import { CreateTourDto } from "./dto/create-tour.dto";
 import { UpdateTourDto } from "./dto/update-tour.dto";
@@ -34,7 +31,6 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRole } from "../users/schemas/user.schema";
 import { TourStatus } from "./schemas/tour.schema";
-
 import { CountriesService } from "../countries/countries.service";
 import { CategoriesService } from "../categories/categories.service";
 import { DestinationsService } from "../destinations/destinations.service";
@@ -109,40 +105,69 @@ export class ToursController {
   }
 
   @Get(":slug")
-  @Render("public/tours/show")
-  async getTour(@Param("slug") slug: string) {
-    const tour = await this.toursService.findBySlug(slug);
+@Render("public/tours/tour")
+async getTour(@Param("slug") slug: string, @Session() session: Record<string, any>) {
+  const tour = await this.toursService.findBySlug(slug);
 
-    if (!tour) {
-        throw new HttpException('Tour not found', HttpStatus.NOT_FOUND);
-    }
-
-    // Get related tours from the same countries
-    const relatedToursResult = await this.toursService.findAll({
-      country: tour.countries.length > 0 ? tour.countries[0]?._id.toString() : undefined,
-      status: TourStatus.PUBLISHED,
-      limit: "4",
-    });
-
-    // Remove the current tour from related tours
-    const filteredRelatedTours = relatedToursResult.tours.filter(
-      (relatedTour) => relatedTour._id.toString() !== tour._id.toString()
-    );
-
-    return {
-      title: `${tour.title}`,
-      tour,
-      relatedTours: filteredRelatedTours.slice(0, 3),
-      layout: "layouts/public",
-      seo: {
-        title: tour.seoTitle || `${tour.title}`,
-        description: tour.seoDescription || tour.overview,
-        keywords: tour.seoKeywords,
-        canonicalUrl: tour.seoCanonicalUrl,
-        ogImage: tour.seoOgImage || tour.coverImage,
-      },
-    };
+  if (!tour) {
+    throw new HttpException('Tour not found', HttpStatus.NOT_FOUND);
   }
+
+  // 1. FIXED LOGIC FOR "YOU MAY ALSO BE INTERESTED IN"
+  const relatedToursResult = await this.toursService.findAll({
+    category: tour.categories.length > 0 
+      ? (tour.categories[0] as any)._id?.toString() || tour.categories[0].toString() 
+      : undefined,
+    // Changed 'destination' to 'country' to match your Service's interface
+    country: tour.countries && tour.countries.length > 0 
+      ? (tour.countries[0] as any)._id?.toString() || tour.countries[0].toString() 
+      : undefined,
+    status: TourStatus.PUBLISHED,
+    limit: "7", 
+  });
+
+  const relatedTours = relatedToursResult.tours
+    .filter(t => t._id.toString() !== tour._id.toString())
+    .slice(0, 6);
+
+  // 2. LOGIC FOR "RECENTLY VIEWED"
+  if (!session.recentlyViewed) {
+    session.recentlyViewed = [];
+  }
+
+  const currentTourData = {
+    _id: tour._id,
+    title: tour.title,
+    slug: tour.slug,
+    coverImage: tour.coverImage,
+    days: tour.days,
+    price: tour.price,
+    overview: tour.overview,
+    groupSize: tour.groupSize
+  };
+
+  // Update session: current tour moves to front, unique entries only, limit to 6
+  const filteredHistory = session.recentlyViewed.filter(
+    (t: any) => t._id.toString() !== tour._id.toString()
+  );
+  
+  session.recentlyViewed = [currentTourData, ...filteredHistory].slice(0, 6);
+
+  return {
+    title: `${tour.title}`,
+    tour,
+    relatedTours,
+    recentlyViewed: session.recentlyViewed,
+    layout: "layouts/public",
+    seo: {
+      title: tour.seoTitle || `${tour.title}`,
+      description: tour.seoDescription || tour.overview,
+      keywords: tour.seoKeywords,
+      canonicalUrl: tour.seoCanonicalUrl,
+      ogImage: tour.seoOgImage || tour.coverImage,
+    },
+  };
+}
 
   @Get("dashboard/tours")
   @UseGuards(SessionAuthGuard)
@@ -216,7 +241,7 @@ export class ToursController {
   @UseGuards(SessionAuthGuard)
   @Render("dashboard/tours/add")
   async getAddTourPage(@Req() req) {
-    const countries = await this.countriesService.findAll({});
+    const countries = await this.countriesService.findAll({}); 
     const categories = await this.categoriesService.findAll({});
     const destinations = await this.destinationsService.findAll({});
 
@@ -230,13 +255,24 @@ export class ToursController {
     };
   }
 
-  @Post("dashboard/tours/add") 
+  @Post("dashboard/tours/add")
   @UseGuards(SessionAuthGuard)
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: "coverImage", maxCount: 1 },
-      { name: "galleryImages", maxCount: 10 },
-    ])
+    FileFieldsInterceptor(
+      [
+        { name: "coverImage", maxCount: 1 },
+        { name: "galleryImages", maxCount: 10 },
+      ],
+      {
+        storage: diskStorage({
+          destination: "./public/uploads/tours",
+          filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+            cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+          },
+        }),
+      }
+    )
   )
   async addTour(
     @Body() createTourDto: CreateTourDto,
@@ -249,40 +285,25 @@ export class ToursController {
     @Res() res: Response
   ) {
     try {
-      const newCoverImageFile = uploadedFiles.coverImage
-        ? uploadedFiles.coverImage[0]
-        : null;
-      const newGalleryImageFiles = uploadedFiles.galleryImages || [];
-
-      // Save cover image path
-      if (newCoverImageFile) {
-        // Save cover image with local path
-        createTourDto.coverImage = `/uploads/tours/${newCoverImageFile.filename}`;
-      } else if (createTourDto.coverImage === "") {
-        createTourDto.coverImage = null;
+      // 1. Handle Images
+      if (uploadedFiles?.coverImage?.[0]) {
+        createTourDto.coverImage = `/uploads/tours/${uploadedFiles.coverImage[0].filename}`;
       }
 
-      // Save gallery image paths
-      if (newGalleryImageFiles.length > 0) {
-        const galleryImageUrls: string[] = [];
-        for (const file of newGalleryImageFiles) {
-          const url = `/uploads/tours/${file.filename}`;
-          galleryImageUrls.push(url);
-        }
-        createTourDto.galleryImages = galleryImageUrls;
-      } else if (!createTourDto.galleryImages) {
-        createTourDto.galleryImages = [];
+      if (uploadedFiles?.galleryImages) {
+        createTourDto.galleryImages = uploadedFiles.galleryImages.map(
+          (file) => `/uploads/tours/${file.filename}`
+        );
       }
 
-      const tourDataToSave: any = {
+      // 2. Fix property mismatch and ensure arrays
+      // We use createTourDto.countries because that is what your DTO now expects
+      const tourDataToSave = {
         ...createTourDto,
-        countries: createTourDto.country ? (Array.isArray(createTourDto.country) ? createTourDto.country : [createTourDto.country]) : [],
-        categories: createTourDto.category ? (Array.isArray(createTourDto.category) ? createTourDto.category : [createTourDto.category]) : [],
-        destinations: createTourDto.destinations ? (Array.isArray(createTourDto.destinations) ? createTourDto.destinations : [createTourDto.destinations]) : [],
+        countries: Array.isArray(createTourDto.countries) ? createTourDto.countries : [createTourDto.countries].filter(Boolean),
+        categories: Array.isArray(createTourDto.categories) ? createTourDto.categories : [createTourDto.categories].filter(Boolean),
+        destinations: Array.isArray(createTourDto.destinations) ? createTourDto.destinations : [createTourDto.destinations].filter(Boolean),
       };
-      delete tourDataToSave.country;
-      delete tourDataToSave.category;
-      delete tourDataToSave.destinations;
 
       await this.toursService.create(tourDataToSave, req.user.id);
 
@@ -290,33 +311,7 @@ export class ToursController {
       return res.redirect("/tours/dashboard/tours");
     } catch (error) {
       console.error("Error adding tour:", error);
-
-      let flashMessage = "Failed to add tour.";
-
-      if (error instanceof HttpException) {
-        const response = error.getResponse();
-        if (
-          typeof response === "object" &&
-          response !== null &&
-          "message" in response
-        ) {
-          if (Array.isArray(response.message)) {
-            flashMessage = response.message.join(", ");
-          } else {
-            flashMessage = response.message as string;
-          }
-        } else if (typeof response === "string") {
-          flashMessage = response;
-        } else {
-          flashMessage = error.message || "An unknown error occurred.";
-        }
-      } else if (error.message) {
-        flashMessage = error.message;
-      }
-
-      req.flash("error_msg", flashMessage);
-      req.flash("oldInput", createTourDto);
-
+      req.flash("error_msg", error.message || "Failed to add tour.");
       return res.redirect("/tours/dashboard/tours/add");
     }
   }
@@ -367,10 +362,21 @@ export class ToursController {
   @Patch("dashboard/tours/edit/:id")
   @UseGuards(SessionAuthGuard)
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: "coverImage", maxCount: 1 },
-      { name: "galleryImages", maxCount: 10 },
-    ])
+    FileFieldsInterceptor(
+      [
+        { name: "coverImage", maxCount: 1 },
+        { name: "galleryImages", maxCount: 10 },
+      ],
+      {
+        storage: diskStorage({
+          destination: "./public/uploads/tours",
+          filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+            cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+          },
+        }),
+      }
+    )
   )
   async updateTour(
     @Param("id") id: string,
@@ -385,86 +391,39 @@ export class ToursController {
   ) {
     try {
       const tour = await this.toursService.findOne(id);
+      if (!tour) throw new Error("Tour not found");
 
-      if (!tour) {
-        req.flash("error_msg", "Tour not found.");
-        return res.redirect("/dashboard/tours");
+      // Handle Cover Image Update
+      if (uploadedFiles?.coverImage?.[0]) {
+        if (tour.coverImage) await this.localStorageService.deleteFile(tour.coverImage);
+        updateTourDto.coverImage = `/uploads/tours/${uploadedFiles.coverImage[0].filename}`;
       }
 
-      if (req.user.role === UserRole.AGENT && tour.createdBy.toString() !== req.user.id) {
-        req.flash("error_msg", "You are not authorized to edit this tour");
-        return res.redirect("/dashboard/tours");
-      }
-
-      const newCoverImageFile = uploadedFiles.coverImage
-        ? uploadedFiles.coverImage[0]
-        : null;
-      const newGalleryImageFiles = uploadedFiles.galleryImages || [];
-
-      // --- Handle cover image update logic ---
-      if (newCoverImageFile) {
-        // Upload new cover image
-        const newCoverImageUrl = `/uploads/tours/${newCoverImageFile.filename}`;
-        // If there was an old cover image, delete it
-        if (tour.coverImage) {
-          await this.localStorageService.deleteFile(tour.coverImage);
+      // Handle Gallery Images Update
+      let currentGallery = tour.galleryImages || [];
+      if (updateTourDto.removedGalleryImages) {
+        const removed = Array.isArray(updateTourDto.removedGalleryImages) 
+                        ? updateTourDto.removedGalleryImages 
+                        : [updateTourDto.removedGalleryImages];
+        
+        for (const img of removed) {
+          await this.localStorageService.deleteFile(img);
         }
-        updateTourDto.coverImage = newCoverImageUrl;
-      } else if (updateTourDto.coverImage === "") {
-        // If user explicitly removed cover image
-        if (tour.coverImage) {
-          await this.localStorageService.deleteFile(tour.coverImage);
-        }
-        updateTourDto.coverImage = null;
-      } else {
-        // No new file, and not explicitly removed, so retain the existing one from the tour object
-        updateTourDto.coverImage = tour.coverImage;
+        currentGallery = currentGallery.filter(img => !removed.includes(img));
       }
 
-      // --- Handle gallery images ---
-      let currentGalleryImages = tour.galleryImages || [];
+      const newGalleryPaths = uploadedFiles?.galleryImages?.map(f => `/uploads/tours/${f.filename}`) || [];
+      updateTourDto.galleryImages = [...currentGallery, ...newGalleryPaths];
 
-      // 1. Delete removed gallery images
-      if (updateTourDto.removedGalleryImages && Array.isArray(updateTourDto.removedGalleryImages)) {
-        for (const imageUrl of updateTourDto.removedGalleryImages) {
-          await this.localStorageService.deleteFile(imageUrl);
-        }
-        currentGalleryImages = currentGalleryImages.filter(
-          (img) => !updateTourDto.removedGalleryImages.includes(img)
-        );
-      }
-
-      // 2. Upload newly uploaded gallery images
-      const uploadedGalleryPaths: string[] = [];
-      for (const file of newGalleryImageFiles) {
-        const url = `/uploads/tours/${file.filename}`;
-        uploadedGalleryPaths.push(url);
-      }
-      updateTourDto.galleryImages = [...currentGalleryImages, ...uploadedGalleryPaths];
-
-      const tourDataToUpdate: any = {
+      // Fix array logic for plurals
+      const tourDataToUpdate = {
         ...updateTourDto,
-        countries: updateTourDto.country
-          ? Array.isArray(updateTourDto.country)
-            ? updateTourDto.country
-            : [updateTourDto.country]
-          : [],
-        categories: updateTourDto.category
-          ? Array.isArray(updateTourDto.category)
-            ? updateTourDto.category
-            : [updateTourDto.category]
-          : [],
-        destinations: updateTourDto.destinations
-          ? Array.isArray(updateTourDto.destinations)
-            ? updateTourDto.destinations
-            : [updateTourDto.destinations]
-          : [],
+        countries: Array.isArray(updateTourDto.countries) ? updateTourDto.countries : [updateTourDto.countries].filter(Boolean),
+        categories: Array.isArray(updateTourDto.categories) ? updateTourDto.categories : [updateTourDto.categories].filter(Boolean),
+        destinations: Array.isArray(updateTourDto.destinations) ? updateTourDto.destinations : [updateTourDto.destinations].filter(Boolean),
       };
-      delete tourDataToUpdate.country;
-      delete tourDataToUpdate.category;
-      delete tourDataToUpdate.destinations;
-      // Remove this to prevent accidentally saving an empty array if no files were actually removed
-      delete tourDataToUpdate.removedGalleryImages;
+
+      delete (tourDataToUpdate as any).removedGalleryImages;
 
       await this.toursService.update(id, tourDataToUpdate, req.user.id);
 
@@ -472,8 +431,8 @@ export class ToursController {
       return res.redirect("/tours/dashboard/tours");
     } catch (error) {
       console.error("Error updating tour:", error);
-      req.flash("error_msg", error.message || "Failed to update tour.");
-      return res.redirect(`/dashboard/tours/edit/${id}`);
+      req.flash("error_msg", error.message);
+      return res.redirect(`/tours/dashboard/tours/edit/${id}`);
     }
   }
 

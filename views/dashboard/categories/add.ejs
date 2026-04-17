@@ -23,17 +23,32 @@
             </div>
             
             <div class="form-group">
-                <label for="categoryCountry">Country</label>
-                <select id="categoryCountry" name="country" class="form-control">
-                    <option value="">All Countries</option>
-                    <% countries.forEach(country => { %>
-                        <option value="<%= country._id %>"
-                            <%= typeof oldInput !== 'undefined' && oldInput.country && oldInput.country === country._id.toString() ? 'selected' : '' %>>
-                            <%= country.name %>
-                        </option>
-                    <% }); %>
-                </select>
-                <small class="form-text text-muted">Select a country or leave as "All Countries" if this category applies to all</small>
+                <label for="categoryCountry">Associated Countries</label>
+                <div class="multi-select-container">
+                    <select id="categoryCountry" name="countries" class="form-control hidden-select" multiple>
+                        <% countries.forEach(country => { %>
+                            <option value="<%= country._id %>"
+                                <% if (typeof oldInput !== 'undefined' && oldInput.countries) { %>
+                                    <%= oldInput.countries.includes(country._id.toString()) ? 'selected' : '' %>
+                                <% } else if (typeof category !== 'undefined' && category.countries) { %>
+                                    <%= category.countries.some(c => (c._id || c).toString() === country._id.toString()) ? 'selected' : '' %>
+                                <% } %>>
+                                <%= country.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+
+                    <div class="selected-tags-container" id="tagsContainer">
+                        <input type="text" id="countrySearch" placeholder="Type to search countries..." class="tag-input-field">
+                    </div>
+                    
+                    <div class="dropdown-list" id="countryDropdown">
+                        <% countries.forEach(country => { %>
+                            <div class="dropdown-item" data-id="<%= country._id %>"><%= country.name %></div>
+                        <% }); %>
+                    </div>
+                </div>
+                <small class="form-text text-muted">You can select multiple countries (e.g., Uganda and Rwanda).</small>
             </div>
             
             <div class="form-group">
@@ -41,12 +56,16 @@
                 <div class="file-upload-container">
                     <input type="file" id="coverImage" name="image" class="file-input" accept="image/*">
                     <div class="file-upload-box">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Drag & drop image or click to browse</span>
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h4 class="upload-title">Add Cover Image</h4>
+                        <p class="upload-text">Drag & drop image here or click to browse</p>
+                        <small class="upload-hint">Recommended: 1200x600px (2:1 ratio), Max 5MB</small>
                     </div>
                     <div class="file-preview" id="imagePreview">
                         <% if (typeof oldInput !== 'undefined' && oldInput.image) { %>
-                            <img src="<%= oldInput.image %>" alt="Image Preview" style="display: block; max-width: 100%; height: auto;">
+                            <img src="<%= oldInput.image %>" alt="Image Preview" style="display: block;">
                         <% } else { %>
                             <img src="" alt="Image Preview" style="display: none;">
                         <% } %>
@@ -89,6 +108,7 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <link href="/css/dashboard.css" rel="stylesheet">
+<link href="/css/form-enhancements.css" rel="stylesheet">
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -200,6 +220,84 @@
             categorySlugInput.value = generateSlug(categoryNameInput.value);
         }
     });
+
+// --- Multi-Select Country Logic ---
+const searchInput = document.getElementById('countrySearch');
+const dropdown = document.getElementById('countryDropdown');
+const tagsContainer = document.getElementById('tagsContainer');
+const realSelect = document.getElementById('categoryCountry');
+const dropdownItems = document.querySelectorAll('.dropdown-item');
+
+function updateTags() {
+    // Clear existing tags except the input
+    const tags = tagsContainer.querySelectorAll('.country-tag');
+    tags.forEach(tag => tag.remove());
+
+    // Add tags based on selected options in the real select
+    Array.from(realSelect.selectedOptions).forEach(option => {
+        const tag = document.createElement('span');
+        tag.className = 'country-tag';
+        tag.innerHTML = `${option.text} <span class="remove-tag" data-id="${option.value}">&times;</span>`;
+        tagsContainer.insertBefore(tag, searchInput);
+    });
+
+    // Mark items in dropdown as selected
+    dropdownItems.forEach(item => {
+        const isSelected = Array.from(realSelect.selectedOptions).some(opt => opt.value === item.dataset.id);
+        item.classList.toggle('selected', isSelected);
+    });
+}
+
+// Show dropdown on focus
+searchInput.addEventListener('focus', () => {
+    dropdown.style.display = 'block';
+});
+
+// Filter dropdown
+searchInput.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    dropdownItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(term) ? 'block' : 'none';
+    });
+});
+
+// Handle item selection
+dropdown.addEventListener('click', (e) => {
+    if (e.target.classList.contains('dropdown-item') && !e.target.classList.contains('selected')) {
+        const id = e.target.dataset.id;
+        const option = Array.from(realSelect.options).find(opt => opt.value === id);
+        if (option) {
+            option.selected = true;
+            updateTags();
+            searchInput.value = '';
+            // searchInput.focus();
+        }
+    }
+});
+
+// Handle tag removal
+tagsContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-tag')) {
+        const id = e.target.dataset.id;
+        const option = Array.from(realSelect.options).find(opt => opt.value === id);
+        if (option) {
+            option.selected = false;
+            updateTags();
+        }
+    }
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.multi-select-container')) {
+        dropdown.style.display = 'none';
+    }
+});
+
+// Initial load
+updateTags();
+
 </script>
 
 <style>

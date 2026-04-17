@@ -1,0 +1,30 @@
+<div class="dashboard-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800">Home Hero Carousel</h2>
+        <a href="/hero-slides/dashboard/add" class="btn btn-success shadow-sm">
+            <i class="fas fa-plus fa-sm mr-2"></i>Add New Slide
+        </a>
+    </div>
+
+    <div class="row">
+        <% slides.forEach(slide => { %>
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100">
+                    <img src="<%= slide.photo %>" class="card-img-top" style="height: 180px; object-fit: cover;">
+                    <div class="card-body">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Order: <%= slide.order %></div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800"><%= slide.title %> <span class="text-primary"><%= slide.titleEnd %></span></div>
+                        <p class="small text-muted mt-2"><%= slide.caption %></p>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="/hero-slides/dashboard/edit/<%= slide._id %>" class="btn btn-sm btn-info px-3">Edit</a>
+                            <form action="/hero-slides/dashboard/delete/<%= slide._id %>?_method=DELETE" method="POST">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
